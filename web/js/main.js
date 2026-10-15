@@ -25,7 +25,8 @@ const S = {
   engine: null,
   info: null,
   renderer: null,
-  opts: { hero: 0, size: 1, fog: true, quick: false, watch: false, engine: 'rust' },
+  opts: { hero: 0, size: 1, fog: true, quick: false, watch: false, engine: 'rust', view3d: true },
+  R3D: null, // the 3D renderer class once render3d.wasm and WebGPU are ready (null = not loaded / unavailable)
   mods: [], // { id, file, text, meta, custom, enabled, errors }
   built: {}, // which engine .wasm files exist
   running: false,
@@ -122,6 +123,7 @@ async function boot() {
   if (q.has('fog')) S.opts.fog = q.get('fog') !== '0';
   if (q.has('watch')) S.opts.watch = q.get('watch') !== '0';
   if (q.has('quick')) S.opts.quick = q.get('quick') !== '0';
+  if (q.has('view')) S.opts.view3d = q.get('view') === '3d';
 
   if (q.has('engine') && ENGINES[q.get('engine')]) S.opts.engine = q.get('engine');
 
@@ -134,6 +136,7 @@ async function boot() {
     await loadModList();
     applyMods();
     buildMenu();
+    if (S.opts.view3d && !(await load3D())) S.opts.view3d = false; // no WebGPU or renderer: play in 2D
   } catch (e) {
     console.error(e);
     $('err').innerHTML =
@@ -371,21 +374,54 @@ function buildMenu() {
   }
   $('engineName').textContent = S.engine.label;
   buildModList();
-  for (const [id, key] of [['optFog', 'fog'], ['optQuick', 'quick'], ['optWatch', 'watch']]) {
+  for (const [id, key] of [['optFog', 'fog'], ['optQuick', 'quick'], ['optWatch', 'watch'], ['opt3d', 'view3d']]) {
     const el = $(id);
     el.checked = !!S.opts[key];
-    el.onchange = () => { S.opts[key] = el.checked; save(); };
+    el.onchange = () => { S.opts[key] = el.checked; save(); if (key === 'view3d' && el.checked) load3D(); };
   }
   $('err').textContent = '';
 }
 
 // ------------------------------------------------------------------------------ match lifecycle
 
+/** Load the 3D renderer (render3d.wasm, the C++ renderer). Resolves to false when that is not possible. */
+let loading3D = null;
+function load3D() {
+  loading3D ||= import('./render3d.js')
+    .then((m) => m.load())
+    .then((R) => { S.R3D = R; return true; })
+    .catch((e) => { console.warn('3D view unavailable:', e); loading3D = null; return false; });
+  return loading3D;
+}
+
+function makeRenderer() {
+  const R = S.opts.view3d && S.R3D ? S.R3D : Renderer;
+  return new R($('world'), $('mini'), S.info, S.engine.terrain);
+}
+
+/** Flip between the 2D and 3D views, mid-match too; the camera carries over. */
+async function toggleView() {
+  S.opts.view3d = !S.opts.view3d;
+  save();
+  if (S.opts.view3d && !(await load3D())) {
+    S.opts.view3d = false;
+    toast('The 3D view needs a browser with WebGPU and render3d.wasm (build it with ./build-render.sh).');
+  }
+  setText($('bView'), S.opts.view3d ? '2D' : '3D');
+  if (!S.renderer || !S.info) return;
+  const cam = { ...S.renderer.cam };
+  S.renderer.dispose();
+  S.renderer = makeRenderer();
+  Object.assign(S.renderer.cam, cam);
+}
+
 function startMatch() {
   const o = S.opts;
   S.info = S.engine.start({ hero: o.hero, perTeam: o.size, fog: o.fog, bot: o.watch });
   onContent(S.info);
-  S.renderer = new Renderer($('world'), $('mini'), S.info, S.engine.terrain);
+  S.renderer?.dispose();
+  S.renderer = makeRenderer();
+  setText($('bView'), S.renderer.is3D ? '2D' : '3D');
   S.seen.clear();
   S.over = false;
   S.paused = false;
@@ -837,6 +873,12 @@ function bindInput() {
   $('bPause').addEventListener('click', () => togglePause());
   $('bMenu').addEventListener('click', () => { if (S.over || confirm('Leave the current match?')) leaveToMenu(); });
   $('bAuto').addEventListener('click', () => setAuto(!S.auto));
+  $('bView').addEventListener('click', () => toggleView());
+  window.addEventListener('render3d-lost', () => {
+    S.R3D = null;
+    loading3D = Promise.resolve(false); // do not try the lost GPU device again
+    if (S.renderer?.is3D) toggleView();
+  });
   $('bSpeed').addEventListener('click', () => {
     S.speed = SPEEDS[(SPEEDS.indexOf(S.speed) + 1) % SPEEDS.length];
     setText($('bSpeed'), `${S.speed}×`);
@@ -871,6 +913,7 @@ function onKeyDown(e) {
     case 'KeyH': S.engine.hold(); setMode(null); break;
     case 'KeyB': togglePanel('shop'); break;
     case 'KeyT': setAuto(!S.auto); break;
+    case 'KeyV': toggleView(); break;
     case 'KeyY': S.lockCam = !S.lockCam; toast(S.lockCam ? 'Camera locked to hero' : 'Camera unlocked'); break;
     case 'Space': e.preventDefault(); centerOnHero(); break;
     default: break;
@@ -1109,7 +1152,7 @@ function updateBoard() {
 
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.1, (now - S.last) / 1000);
+  const dt = clamp((now - S.last) / 1000, 0, 0.1); // rAF time can trail S.last when a match starts mid-frame
   S.last = now;
   if (!S.running) return;
 
@@ -1140,4 +1183,4 @@ requestAnimationFrame((t) => { S.last = t; requestAnimationFrame(frame); });
 boot();
 
 // Handy for the console and for automated tests.
-window.__game = { S, startMatch, beginCast, buy, applyMods, addModFile, switchEngine };
+window.__game = { S, startMatch, toggleView, beginCast, buy, applyMods, addModFile, switchEngine };

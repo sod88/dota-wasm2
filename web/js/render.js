@@ -7,7 +7,7 @@ export const TEAM = [
   { main: '#4fd17a', light: '#a8f5c2', dark: '#1b6e42', rgb: '79,209,122', name: 'Radiant' },
   { main: '#ff5d52', light: '#ffb0a8', dark: '#842019', rgb: '255,93,82', name: 'Dire' },
 ];
-const NEUTRAL_COLORS = ['#c9a45f', '#a8794a', '#8fae5a', '#8a7ab0'];
+export const NEUTRAL_COLORS = ['#c9a45f', '#a8794a', '#8fae5a', '#8a7ab0'];
 const DMG_COLORS = ['#ffffff', '#7fd0ff', '#e49bff'];
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -28,7 +28,8 @@ function cellRand(cx, cy, salt) {
 
 // ------------------------------------------------------------------------------ terrain
 
-function buildTerrain(info, terrain) {
+/** The map as one big canvas. `trees: false` leaves the forest floor bare (the 3D view grows real trees). */
+export function buildTerrain(info, terrain, { trees = true } = {}) {
   const S = 0.75, N = info.grid, cp = info.cell * S;
   const size = Math.round(info.world * S);
   const c = document.createElement('canvas');
@@ -89,7 +90,7 @@ function buildTerrain(info, terrain) {
     }
   }
   // trees on the walls
-  for (let cy = 0; cy < N; cy++) {
+  for (let cy = 0; trees && cy < N; cy++) {
     for (let cx = 0; cx < N; cx++) {
       if (T(cx, cy) !== 0) continue;
       let open = 0;
@@ -676,10 +677,11 @@ export class Renderer {
     const k = u[o + U.kind], hp = u[o + U.hp], mhp = u[o + U.max_hp], team = u[o + U.team], r = u[o + U.radius];
     const hero = k === kind.hero, bld = k === kind.tower || k === kind.ancient;
     if (!hero && !bld && hp >= mhp - 0.5 && view.hover !== i) return; // creeps: only once damaged
-    const [sx, sy] = this.w2s(view.px[i], view.py[i]);
-    if (sx < -60 || sx > this.W + 60 || sy < -60 || sy > this.H + 60) return;
-    const w = clamp(r * 2.6 * z, hero ? 46 : 26, bld ? 96 : 70), h = hero ? 7 : bld ? 7 : 4;
-    const x = sx - w / 2, y = sy - (r * (hero ? 1.25 : 1.2) + (bld ? 22 : 12)) * z - h - (hero ? 8 : 0);
+    const h = hero ? 7 : bld ? 7 : 4;
+    const [sx, top] = this.barAnchor(view, i, r, hero, bld);
+    if (sx < -60 || sx > this.W + 60 || top < -60 || top > this.H + 60) return;
+    const w = clamp(r * 2.6 * z, hero ? 46 : 26, bld ? 96 : 70);
+    const x = sx - w / 2, y = top - h - (hero ? 8 : 0);
     ctx.fillStyle = 'rgba(0,0,0,.75)';
     ctx.fillRect(x - 1, y - 1, w + 2, h + 2 + (hero ? 4 : 0));
     const pct = clamp(hp / mhp, 0, 1);
@@ -696,11 +698,17 @@ export class Renderer {
     }
   }
 
+  /** Screen x and the y just above the unit's head, where its bars sit. */
+  barAnchor(view, i, r, hero, bld) {
+    const [sx, sy] = this.w2s(view.px[i], view.py[i]);
+    return [sx, sy - (r * (hero ? 1.25 : 1.2) + (bld ? 22 : 12)) * this.cam.zoom];
+  }
+
   drawFloaters(ctx) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const fl of this.floaters) {
-      const [sx, sy] = this.w2s(fl.x, fl.y);
+      const [sx, sy] = this.w2s(fl.x, fl.y, 40); // height is only used by the 3D view
       const k = fl.life / fl.max;
       ctx.globalAlpha = clamp(k * 2, 0, 1);
       ctx.font = `800 ${Math.round(fl.size * (0.9 + 0.25 * (1 - k)))}px system-ui, sans-serif`;
@@ -824,10 +832,17 @@ export class Renderer {
       else { m.fillRect(x - 1.5, y - 1.5, 3, 3); }
     }
     m.globalAlpha = 1;
-    // viewport
+    this.drawViewport(m, sc);
+  }
+
+  /** The camera's footprint on the minimap. */
+  drawViewport(m, sc) {
     const [x0, y0] = this.s2w(0, 0), [x1, y1] = this.s2w(this.W, this.H);
     m.strokeStyle = 'rgba(255,255,255,.9)';
     m.lineWidth = 1.5;
     m.strokeRect(x0 * sc, y0 * sc, (x1 - x0) * sc, (y1 - y0) * sc);
   }
+
+  /** Release anything the renderer owns (the 3D view holds GPU resources). */
+  dispose() {}
 }

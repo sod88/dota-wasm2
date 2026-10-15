@@ -20,6 +20,7 @@ brew install emscripten cmake
 
 ./build.sh        # Rust engine -> web/moba_engine.wasm
 ./build-cpp.sh    # C++ engine  -> web/moba_engine_cpp.wasm
+./build-render.sh # C++ 3D renderer -> web/render3d.wasm (optional)
 ./serve.sh        # http://localhost:8080
 ```
 
@@ -28,6 +29,18 @@ one of the two builds; the menu offers whichever exists. Don't open `index.html`
 browsers refuse to load `.wasm` from `file://` URLs.
 
 `build-cpp.sh` also works with wasi-sdk (`WASI_SDK_PATH=...`) or zig instead of Emscripten.
+
+### 3D view
+
+`render3d.wasm` is a C++ renderer (`cpp/render/`) that draws the match in 3D with **WebGPU**: trees,
+unit models, shadows and fog of war. It draws whichever engine is running; each frame the page copies
+the units and projectiles from the engine's snapshot into the renderer. Toggle it with the **3D view**
+checkbox, the **2D/3D** button or **V**. Without WebGPU (or without `render3d.wasm`) the game plays in
+the 2D view.
+
+The renderer is freestanding C++ with no standard library, so `build-render.sh` takes Emscripten,
+LLVM clang (`brew install llvm`), wasi-sdk or zig. It talks to the browser through a small WebGPU
+bridge in `web/js/render3d.js` (the imports are listed in `cpp/render/gpu.h`).
 
 ## Mods
 
@@ -91,7 +104,8 @@ cpp/src/          C++ engine            src/              Rust engine (same modu
   ai.cpp            creeps, towers, bots  ai.rs
   ffi.cpp           the C ABI             ffi.rs
 cpp/tests, cpp/examples                   tests/, examples/
-web/              index.html, js/ (engine.js loader, render.js, icons.js, main.js), mods/, parity.html
+cpp/render/       the 3D renderer (WebGPU, compiled to render3d.wasm; draws either engine)
+web/              index.html, js/ (engine.js loader, render.js, render3d.js, icons.js, main.js), mods/, parity.html
 tools/            enginelib.py (drives either engine from Python), parity.py, gen_cpp_builtin.py
 tests/mod_cases.json   mod error cases both engines must reproduce exactly
 ```
