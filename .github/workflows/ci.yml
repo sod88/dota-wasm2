@@ -1,0 +1,59 @@
+# Both engines must pass their own tests and stay bit-identical to each other (tools/parity.py).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Tests and parity (native)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Rust tests
+        run: cargo test --release
+
+      - name: Rust shared library (for parity)
+        run: cargo build --release
+
+      - name: C++ build
+        run: |
+          cmake -S cpp -B cpp/build
+          cmake --build cpp/build -j
+
+      - name: C++ tests
+        run: cpp/build/engine_tests
+
+      - name: Rust vs C++ parity
+        run: python3 tools/parity.py
+
+  wasm:
+    name: WebAssembly builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: mymindstorm/setup-emsdk@v14
+
+      - name: Rust engine -> web/moba_engine.wasm
+        run: ./build.sh
+
+      - name: C++ engine -> web/moba_engine_cpp.wasm
+        run: ./build-cpp.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasm
+          path: web/*.wasm
