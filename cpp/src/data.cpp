@@ -209,7 +209,7 @@ Content make_builtin_content() {
         h.primary = 1;
         h.str_ = 17.0f; h.agi = 26.0f; h.int_ = 15.0f;
         h.gain_str = 1.8f; h.gain_agi = 3.0f; h.gain_int = 1.4f;
-        h.dmg_min = 30.0f; h.dmg_max = 36.0f; h.range = 300.0f; h.bat = 1.7f; h.ms = 165.0f; h.proj_speed = 700.0f; h.radius = 15.0f;
+        h.dmg_min = 30.0f; h.dmg_max = 36.0f; h.range = 270.0f; h.bat = 1.7f; h.ms = 165.0f; h.proj_speed = 700.0f; h.radius = 15.0f;
         h.build = {12, 7, 3, 5, 13, 11, 20};  // Gloves of Haste, Boots of Speed, Band of Agility, Blades of Attack, Treads of Swiftness, Broadsword, Executioner's Axe
         h.skill_order = {{0, 2, 1}};
         h.glyph = "bow";
@@ -288,7 +288,7 @@ Content make_builtin_content() {
         h.name = "Archmage";
         h.title = "Intelligence - ranged caster";
         h.primary = 2;
-        h.str_ = 16.0f; h.agi = 14.0f; h.int_ = 25.0f;
+        h.str_ = 19.0f; h.agi = 14.0f; h.int_ = 25.0f;
         h.gain_str = 1.8f; h.gain_agi = 1.5f; h.gain_int = 3.2f;
         h.dmg_min = 26.0f; h.dmg_max = 32.0f; h.range = 300.0f; h.bat = 1.7f; h.ms = 160.0f; h.proj_speed = 650.0f; h.radius = 15.0f;
         h.build = {4, 17, 7, 10, 15, 18, 9};  // Staff of Wisdom, Mana Potion, Boots of Speed, Energy Booster, Arcane Scepter, Blink Dagger, Vitality Booster
