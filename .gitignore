@@ -2,6 +2,7 @@ target/
 cpp/build/
 web/moba_engine.wasm
 web/moba_engine_cpp.wasm
+web/render3d.wasm
 __pycache__/
 
 # macOS

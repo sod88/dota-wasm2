@@ -26,7 +26,7 @@ const S = {
   info: null,
   renderer: null,
   opts: { hero: 0, size: 1, fog: true, quick: false, watch: false, engine: 'rust', view3d: true },
-  R3D: null, // the 3D renderer class, once Three.js has loaded (null = not loaded / unavailable)
+  R3D: null, // the 3D renderer class once render3d.wasm and WebGPU are ready (null = not loaded / unavailable)
   mods: [], // { id, file, text, meta, custom, enabled, errors }
   built: {}, // which engine .wasm files exist
   running: false,
@@ -136,7 +136,7 @@ async function boot() {
     await loadModList();
     applyMods();
     buildMenu();
-    if (S.opts.view3d && !(await load3D())) S.opts.view3d = false; // no Three.js: play in 2D
+    if (S.opts.view3d && !(await load3D())) S.opts.view3d = false; // no WebGPU or renderer: play in 2D
   } catch (e) {
     console.error(e);
     $('err').innerHTML =
@@ -384,11 +384,12 @@ function buildMenu() {
 
 // ------------------------------------------------------------------------------ match lifecycle
 
-/** Fetch the 3D renderer (and Three.js from its CDN). Resolves to false when that is not possible. */
+/** Load the 3D renderer (render3d.wasm, the C++ renderer). Resolves to false when that is not possible. */
 let loading3D = null;
 function load3D() {
   loading3D ||= import('./render3d.js')
-    .then((m) => { S.R3D = m.Renderer3D; return true; })
+    .then((m) => m.load())
+    .then((R) => { S.R3D = R; return true; })
     .catch((e) => { console.warn('3D view unavailable:', e); loading3D = null; return false; });
   return loading3D;
 }
@@ -404,7 +405,7 @@ async function toggleView() {
   save();
   if (S.opts.view3d && !(await load3D())) {
     S.opts.view3d = false;
-    toast('The 3D view needs Three.js from cdn.jsdelivr.net, which could not be loaded.');
+    toast('The 3D view needs a browser with WebGPU and render3d.wasm (build it with ./build-render.sh).');
   }
   setText($('bView'), S.opts.view3d ? '2D' : '3D');
   if (!S.renderer || !S.info) return;
@@ -420,7 +421,7 @@ function startMatch() {
   onContent(S.info);
   S.renderer?.dispose();
   S.renderer = makeRenderer();
-  setText($('bView'), S.renderer.camera ? '2D' : '3D');
+  setText($('bView'), S.renderer.is3D ? '2D' : '3D');
   S.seen.clear();
   S.over = false;
   S.paused = false;
@@ -873,6 +874,11 @@ function bindInput() {
   $('bMenu').addEventListener('click', () => { if (S.over || confirm('Leave the current match?')) leaveToMenu(); });
   $('bAuto').addEventListener('click', () => setAuto(!S.auto));
   $('bView').addEventListener('click', () => toggleView());
+  window.addEventListener('render3d-lost', () => {
+    S.R3D = null;
+    loading3D = Promise.resolve(false); // do not try the lost GPU device again
+    if (S.renderer?.is3D) toggleView();
+  });
   $('bSpeed').addEventListener('click', () => {
     S.speed = SPEEDS[(SPEEDS.indexOf(S.speed) + 1) % SPEEDS.length];
     setText($('bSpeed'), `${S.speed}×`);
