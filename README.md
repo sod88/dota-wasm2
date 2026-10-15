@@ -91,7 +91,7 @@ cpp/src/          C++ engine            src/              Rust engine (same modu
   ai.cpp            creeps, towers, bots  ai.rs
   ffi.cpp           the C ABI             ffi.rs
 cpp/tests, cpp/examples                   tests/, examples/
-web/              index.html, js/ (engine.js loader, render.js, icons.js, main.js), mods/, parity.html
+web/              index.html, js/ (engine.js loader, render.js, render3d.js, icons.js, main.js), mods/, parity.html
 tools/            enginelib.py (drives either engine from Python), parity.py, gen_cpp_builtin.py
 tests/mod_cases.json   mod error cases both engines must reproduce exactly
 ```

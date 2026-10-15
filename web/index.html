@@ -12,8 +12,10 @@
 }
 * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
 html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
-canvas#world { position: fixed; inset: 0; display: block; transition: filter .6s; }
-body.dead canvas#world { filter: grayscale(.85) brightness(.8); }
+canvas#world, canvas#world3d { position: fixed; inset: 0; display: block; transition: filter .6s; }
+canvas#world3d { display: none; }
+body.three canvas#world3d { display: block; }
+body.dead canvas#world, body.dead canvas#world3d { filter: grayscale(.85) brightness(.8); }
 #hud { position: fixed; inset: 0; pointer-events: none; }
 #hud > * { pointer-events: auto; }
 #hud.hidden { display: none; }
@@ -156,6 +158,7 @@ body.dropping .modbox { border-color: var(--gold); box-shadow: 0 0 22px #e8c8755
 </style>
 </head>
 <body>
+<canvas id="world3d"></canvas>
 <canvas id="world"></canvas>
 
 <div id="hud" class="hidden">
@@ -166,6 +169,7 @@ body.dropping .modbox { border-color: var(--gold); box-shadow: 0 0 22px #e8c8755
   </div>
   <div id="topright">
     <button class="btn" id="bSpeed" title="Game speed">1×</button>
+    <button class="btn" id="bView" title="Switch between the 3D and 2D views (V)">2D</button>
     <button class="btn" id="bAuto" title="Let the bot play your hero (T)">Auto</button>
     <button class="btn" id="bPause" title="Pause (P)">❚❚</button>
     <button class="btn" id="bMenu" title="Back to menu">Menu</button>
@@ -218,6 +222,7 @@ body.dropping .modbox { border-color: var(--gold); box-shadow: 0 0 22px #e8c8755
       <label><input type="checkbox" id="optFog" checked> Fog of war</label>
       <label><input type="checkbox" id="optQuick"> Quick-cast</label>
       <label><input type="checkbox" id="optWatch"> Watch bots play</label>
+      <label><input type="checkbox" id="opt3d" checked> 3D view</label>
     </div>
     <div class="modbox" id="mods">
       <div class="modhead"><b>Mods</b><span id="modSummary"></span><span class="sp"></span>
@@ -231,7 +236,7 @@ body.dropping .modbox { border-color: var(--gold); box-shadow: 0 0 22px #e8c8755
     <div id="err"></div>
     <div class="help">
       <kbd>Right-click</kbd> move / attack &nbsp; <kbd>A</kbd>+click attack-move &nbsp; <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> abilities (<kbd>Shift</kbd>+key to learn) &nbsp; <kbd>1</kbd>–<kbd>6</kbd> items<br>
-      <kbd>S</kbd> stop &nbsp; <kbd>H</kbd> hold &nbsp; <kbd>B</kbd> shop (at your fountain) &nbsp; <kbd>Tab</kbd> scoreboard &nbsp; <kbd>Space</kbd> find hero &nbsp; <kbd>Y</kbd> camera lock &nbsp; <kbd>T</kbd> autopilot &nbsp; <kbd>P</kbd> pause &nbsp; wheel = zoom
+      <kbd>S</kbd> stop &nbsp; <kbd>H</kbd> hold &nbsp; <kbd>B</kbd> shop (at your fountain) &nbsp; <kbd>Tab</kbd> scoreboard &nbsp; <kbd>Space</kbd> find hero &nbsp; <kbd>Y</kbd> camera lock &nbsp; <kbd>T</kbd> autopilot &nbsp; <kbd>V</kbd> 3D / 2D &nbsp; <kbd>P</kbd> pause &nbsp; wheel = zoom
     </div>
   </div>
 </div>
