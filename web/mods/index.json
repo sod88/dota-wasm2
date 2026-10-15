@@ -1,0 +1,4 @@
+{
+  "comment": "Mods listed here appear in the game's menu. Add your own file name to the list.",
+  "mods": ["nightblade.json", "gold-rush.json", "wild-jungle.json"]
+}

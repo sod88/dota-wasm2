@@ -1,0 +1,896 @@
+[
+ {
+  "name": "empty object is a valid no-op",
+  "mod": {},
+  "errors": []
+ },
+ {
+  "name": "metadata only",
+  "mod": {
+   "name": "Meta",
+   "version": "1.2",
+   "author": "me",
+   "description": "d"
+  },
+  "errors": []
+ },
+ {
+  "name": "comment keys are ignored",
+  "mod": {
+   "comment": "hi",
+   "rules": {
+    "comment": "x",
+    "start_gold": 700
+   }
+  },
+  "errors": []
+ },
+ {
+  "name": "truncated json",
+  "mod_text": "{\"a\":",
+  "errors": [
+   "not valid JSON: line 1, column 6: unexpected end of file"
+  ]
+ },
+ {
+  "name": "trailing comma",
+  "mod_text": "[1,]",
+  "errors": [
+   "not valid JSON: line 1, column 4: unexpected character"
+  ]
+ },
+ {
+  "name": "not an object",
+  "mod": [
+   1,
+   2
+  ],
+  "errors": [
+   "$: expected an object, found an array"
+  ]
+ },
+ {
+  "name": "duplicate key",
+  "mod_text": "{\"name\":\"a\",\"name\":\"b\"}",
+  "errors": [
+   "not valid JSON: line 1, column 13: duplicate key \"name\""
+  ]
+ },
+ {
+  "name": "unknown top-level key",
+  "mod": {
+   "foo": 1,
+   "bar": 2
+  },
+  "errors": [
+   "$.foo: unknown key",
+   "$.bar: unknown key"
+  ]
+ },
+ {
+  "name": "unsupported format",
+  "mod": {
+   "format": 2
+  },
+  "errors": [
+   "$.format: unsupported mod format (this engine reads format 1)"
+  ]
+ },
+ {
+  "name": "rules: unknown, range, type, fraction",
+  "mod": {
+   "rules": {
+    "start_gold": -5,
+    "wave_interval": "fast",
+    "wave_melee": 2.5,
+    "bogus": 1
+   }
+  },
+  "errors": [
+   "$.rules.start_gold: must be between 0 and 1000000",
+   "$.rules.wave_interval: expected a number, found a string",
+   "$.rules.wave_melee: must be a whole number",
+   "$.rules.bogus: unknown key"
+  ]
+ },
+ {
+  "name": "rules: ok",
+  "mod": {
+   "rules": {
+    "start_gold": 900,
+    "wave_interval": 20,
+    "siege_every": 0,
+    "magic_resist": 0.5
+   }
+  },
+  "errors": []
+ },
+ {
+  "name": "xp_table: first not zero",
+  "mod": {
+   "xp_table": [
+    5,
+    100,
+    200
+   ]
+  },
+  "errors": [
+   "$.xp_table[0]: level 1 must need 0 XP"
+  ]
+ },
+ {
+  "name": "xp_table: decreasing",
+  "mod": {
+   "xp_table": [
+    0,
+    300,
+    200
+   ]
+  },
+  "errors": [
+   "$.xp_table: values must not decrease"
+  ]
+ },
+ {
+  "name": "xp_table: too short",
+  "mod": {
+   "xp_table": [
+    0
+   ]
+  },
+  "errors": [
+   "$.xp_table: must have between 2 and 60 entries"
+  ]
+ },
+ {
+  "name": "xp_table: ok (level cap 4)",
+  "mod": {
+   "xp_table": [
+    0,
+    100,
+    300,
+    600
+   ]
+  },
+  "errors": []
+ },
+ {
+  "name": "item: missing cost",
+  "mod": {
+   "items": [
+    {
+     "name": "Thing"
+    }
+   ]
+  },
+  "errors": [
+   "$.items[0]: missing required key \"cost\""
+  ]
+ },
+ {
+  "name": "item: unknown key, bad colour, bad active",
+  "mod": {
+   "items": [
+    {
+     "name": "Thing",
+     "cost": 10,
+     "wat": 1,
+     "color": "red",
+     "active": "fly"
+    }
+   ]
+  },
+  "errors": [
+   "$.items[0].wat: unknown key",
+   "$.items[0].color: expected a colour like \"#ff8800\"",
+   "$.items[0].active: unknown active effect \"fly\" (expected one of: none, salve, mana, blink)"
+  ]
+ },
+ {
+  "name": "item: duplicate names",
+  "mod": {
+   "items": [
+    {
+     "name": "Thing",
+     "cost": 10
+    },
+    {
+     "name": "Thing",
+     "cost": 20
+    }
+   ]
+  },
+  "errors": [
+   "$.items[1]: duplicate name \"Thing\" (also at $.items[0])"
+  ]
+ },
+ {
+  "name": "item: patch existing and add new",
+  "mod": {
+   "items": [
+    {
+     "name": "Boots of Speed",
+     "cost": 400
+    },
+    {
+     "name": "Cloak",
+     "cost": 300,
+     "armor": 3,
+     "color": "#88aaff"
+    }
+   ]
+  },
+  "errors": []
+ },
+ {
+  "name": "hero: new without abilities",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Lonely"
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[0]: missing required key \"abilities\""
+  ]
+ },
+ {
+  "name": "hero: new with 3 abilities",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Lonely",
+     "abilities": [
+      {
+       "name": "Bolt",
+       "cast": "target"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[0].abilities: a new hero needs exactly 4 abilities"
+  ]
+ },
+ {
+  "name": "hero: ability needs cast",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Lonely",
+     "abilities": [
+      {
+       "name": "x"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[0].abilities[0]: missing required key \"cast\""
+  ]
+ },
+ {
+  "name": "hero: bad enums",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Lonely",
+     "primary": "wis",
+     "abilities": [
+      {
+       "name": "Bolt",
+       "cast": "zap"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target",
+       "dtype": "holy"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target",
+       "fx": [
+        "stun",
+        "fly"
+       ]
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[0].primary: unknown primary attribute \"wis\" (expected one of: str, agi, int)",
+   "$.heroes[0].abilities[0].cast: unknown cast type \"zap\" (expected one of: none, target, line, point, self_aoe, self_buff, blink)",
+   "$.heroes[0].abilities[1].dtype: unknown damage type \"holy\" (expected one of: physical, magical, pure)",
+   "$.heroes[0].abilities[2].fx[1]: unknown effect \"fly\" (expected one of: stun, slow, root, haste, aspd)"
+  ]
+ },
+ {
+  "name": "hero: per-level array too long / bad type",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Lonely",
+     "abilities": [
+      {
+       "name": "Bolt",
+       "cast": "target",
+       "dmg": [
+        1,
+        2,
+        3,
+        4,
+        5
+       ]
+      },
+      {
+       "name": "Bolt",
+       "cast": "target",
+       "cd": "slow"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target",
+       "req_level": [
+        1.5
+       ]
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[0].abilities[0].dmg: expected a number or an array of 1 to 4 numbers",
+   "$.heroes[0].abilities[1].cd: expected a number or an array of 1 to 4 numbers",
+   "$.heroes[0].abilities[2].req_level[0]: must be a whole number"
+  ]
+ },
+ {
+  "name": "hero: unknown item in build, bad skill_order",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Lonely",
+     "build": [
+      "Boots of Speed",
+      "Nope"
+     ],
+     "skill_order": [
+      0,
+      1
+     ],
+     "abilities": [
+      {
+       "name": "Bolt",
+       "cast": "target"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      },
+      {
+       "name": "Bolt",
+       "cast": "target"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[0].build[1]: unknown item \"Nope\"",
+   "$.heroes[0].skill_order: expected exactly 3 ability numbers (0, 1 or 2)"
+  ]
+ },
+ {
+  "name": "hero: dmg_min above dmg_max",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Lonely",
+     "abilities": [
+      {
+       "name": "A0",
+       "cast": "target"
+      },
+      {
+       "name": "A1",
+       "cast": "target"
+      },
+      {
+       "name": "A2",
+       "cast": "target"
+      },
+      {
+       "name": "A3",
+       "cast": "target"
+      }
+     ],
+     "dmg_min": 50,
+     "dmg_max": 40
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[0]: dmg_min must not exceed dmg_max"
+  ]
+ },
+ {
+  "name": "hero: ok (new hero with build, glyph, colour)",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Nightblade",
+     "abilities": [
+      {
+       "name": "A0",
+       "cast": "target"
+      },
+      {
+       "name": "A1",
+       "cast": "target"
+      },
+      {
+       "name": "A2",
+       "cast": "target"
+      },
+      {
+       "name": "A3",
+       "cast": "target"
+      }
+     ],
+     "primary": "agi",
+     "glyph": "bolt",
+     "color": "#6a5acd",
+     "build": [
+      "Boots of Speed",
+      "Blink Dagger"
+     ],
+     "skill_order": [
+      1,
+      0,
+      2
+     ]
+    }
+   ]
+  },
+  "errors": []
+ },
+ {
+  "name": "hero: patch existing keeps other fields",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Warden",
+     "ms": 200,
+     "abilities": [
+      null,
+      {
+       "dmg": [
+        100,
+        150,
+        200,
+        250
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "errors": []
+ },
+ {
+  "name": "hero: duplicate names in one mod",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Twin",
+     "abilities": [
+      {
+       "name": "A0",
+       "cast": "target"
+      },
+      {
+       "name": "A1",
+       "cast": "target"
+      },
+      {
+       "name": "A2",
+       "cast": "target"
+      },
+      {
+       "name": "A3",
+       "cast": "target"
+      }
+     ]
+    },
+    {
+     "name": "Twin",
+     "abilities": [
+      {
+       "name": "A0",
+       "cast": "target"
+      },
+      {
+       "name": "A1",
+       "cast": "target"
+      },
+      {
+       "name": "A2",
+       "cast": "target"
+      },
+      {
+       "name": "A3",
+       "cast": "target"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[1]: duplicate name \"Twin\" (also at $.heroes[0])"
+  ]
+ },
+ {
+  "name": "hero: too many abilities when patching",
+  "mod": {
+   "heroes": [
+    {
+     "name": "Warden",
+     "abilities": [
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   ]
+  },
+  "errors": [
+   "$.heroes[0].abilities: expected at most 4 abilities"
+  ]
+ },
+ {
+  "name": "neutral: missing hp",
+  "mod": {
+   "neutrals": [
+    {
+     "name": "Imp",
+     "dmg_min": 1,
+     "dmg_max": 2
+    }
+   ]
+  },
+  "errors": [
+   "$.neutrals[0]: missing required key \"hp\""
+  ]
+ },
+ {
+  "name": "neutral: ok add, camps reference it",
+  "mod": {
+   "neutrals": [
+    {
+     "name": "Imp",
+     "hp": 200,
+     "dmg_min": 10,
+     "dmg_max": 12
+    }
+   ],
+   "camps": [
+    [
+     "Imp",
+     "Imp"
+    ],
+    [
+     "Brute",
+     "Imp"
+    ],
+    [
+     "Ogre",
+     "Imp",
+     "Imp"
+    ]
+   ]
+  },
+  "errors": []
+ },
+ {
+  "name": "camps: unknown neutral and wrong count",
+  "mod": {
+   "camps": [
+    [
+     "Ghost"
+    ],
+    [
+     "Brute"
+    ]
+   ]
+  },
+  "errors": [
+   "$.camps: expected exactly 3 camp tiers (arrays of neutral names)"
+  ]
+ },
+ {
+  "name": "camps: wrong count only",
+  "mod": {
+   "camps": [
+    [
+     "Brute"
+    ]
+   ]
+  },
+  "errors": [
+   "$.camps: expected exactly 3 camp tiers (arrays of neutral names)"
+  ]
+ },
+ {
+  "name": "replace: items without heroes",
+  "mod": {
+   "replace": [
+    "items"
+   ],
+   "items": [
+    {
+     "name": "Only",
+     "cost": 5
+    }
+   ]
+  },
+  "errors": [
+   "$.replace: replacing \"items\" also requires replacing \"heroes\" (their bot builds refer to the old items)"
+  ]
+ },
+ {
+  "name": "replace: neutrals without camps",
+  "mod": {
+   "replace": [
+    "neutrals"
+   ],
+   "neutrals": [
+    {
+     "name": "Imp",
+     "hp": 100,
+     "dmg_min": 1,
+     "dmg_max": 2
+    }
+   ]
+  },
+  "errors": [
+   "$.replace: replacing \"neutrals\" also requires a \"camps\" list"
+  ]
+ },
+ {
+  "name": "replace: unknown list",
+  "mod": {
+   "replace": [
+    "towers",
+    3
+   ]
+  },
+  "errors": [
+   "$.replace[0]: cannot replace \"towers\" (expected one of: heroes, items, neutrals)",
+   "$.replace[1]: expected a string, found a number"
+  ]
+ },
+ {
+  "name": "replace: heroes with none given",
+  "mod": {
+   "replace": [
+    "heroes"
+   ]
+  },
+  "errors": [
+   "$.heroes: the game needs at least one hero"
+  ]
+ },
+ {
+  "name": "replace: heroes ok (total conversion of the roster)",
+  "mod": {
+   "replace": [
+    "heroes"
+   ],
+   "heroes": [
+    {
+     "name": "Solo",
+     "abilities": [
+      {
+       "name": "A0",
+       "cast": "target"
+      },
+      {
+       "name": "A1",
+       "cast": "target"
+      },
+      {
+       "name": "A2",
+       "cast": "target"
+      },
+      {
+       "name": "A3",
+       "cast": "target"
+      }
+     ],
+     "glyph": "star"
+    }
+   ]
+  },
+  "errors": []
+ },
+ {
+  "name": "creeps: bad key and hp below minimum",
+  "mod": {
+   "creeps": {
+    "melee": {
+     "hp": 0
+    },
+    "mage": {}
+   }
+  },
+  "errors": [
+   "$.creeps.melee.hp: must be between 1 and 10000000",
+   "$.creeps.mage: unknown key (expected melee, ranged or siege)"
+  ]
+ },
+ {
+  "name": "creeps: ok",
+  "mod": {
+   "creeps": {
+    "melee": {
+     "name": "Pikeman",
+     "hp": 600
+    },
+    "siege": {
+     "bldg_mult": 5
+    }
+   }
+  },
+  "errors": []
+ },
+ {
+  "name": "towers: too many / ancient range",
+  "mod": {
+   "towers": [
+    null,
+    null,
+    null,
+    null
+   ],
+   "ancient": {
+    "radius": 0
+   }
+  },
+  "errors": [
+   "$.towers: expected at most 3 tiers",
+   "$.ancient.radius: must be between 1 and 500"
+  ]
+ },
+ {
+  "name": "towers: ok with null",
+  "mod": {
+   "towers": [
+    null,
+    {
+     "hp": 3000
+    }
+   ],
+   "ancient": {
+    "hp": 6000
+   }
+  },
+  "errors": []
+ },
+ {
+  "name": "type confusion",
+  "mod": {
+   "rules": 5,
+   "items": {
+    "a": 1
+   },
+   "heroes": "x",
+   "creeps": [],
+   "ancient": null
+  },
+  "errors": [
+   "$.rules: expected an object, found a number",
+   "$.items: expected an array, found an object",
+   "$.creeps: expected an object, found an array",
+   "$.ancient: expected an object, found null",
+   "$.heroes: expected an array, found a string"
+  ]
+ },
+ {
+  "name": "more than 20 errors are summarised",
+  "mod": {
+   "rules": {
+    "k0": 1,
+    "k1": 1,
+    "k2": 1,
+    "k3": 1,
+    "k4": 1,
+    "k5": 1,
+    "k6": 1,
+    "k7": 1,
+    "k8": 1,
+    "k9": 1,
+    "k10": 1,
+    "k11": 1,
+    "k12": 1,
+    "k13": 1,
+    "k14": 1,
+    "k15": 1,
+    "k16": 1,
+    "k17": 1,
+    "k18": 1,
+    "k19": 1,
+    "k20": 1,
+    "k21": 1,
+    "k22": 1,
+    "k23": 1,
+    "k24": 1,
+    "k25": 1,
+    "k26": 1,
+    "k27": 1,
+    "k28": 1,
+    "k29": 1
+   }
+  },
+  "errors": [
+   "$.rules.k0: unknown key",
+   "$.rules.k1: unknown key",
+   "$.rules.k2: unknown key",
+   "$.rules.k3: unknown key",
+   "$.rules.k4: unknown key",
+   "$.rules.k5: unknown key",
+   "$.rules.k6: unknown key",
+   "$.rules.k7: unknown key",
+   "$.rules.k8: unknown key",
+   "$.rules.k9: unknown key",
+   "$.rules.k10: unknown key",
+   "$.rules.k11: unknown key",
+   "$.rules.k12: unknown key",
+   "$.rules.k13: unknown key",
+   "$.rules.k14: unknown key",
+   "$.rules.k15: unknown key",
+   "$.rules.k16: unknown key",
+   "$.rules.k17: unknown key",
+   "$.rules.k18: unknown key",
+   "$.rules.k19: unknown key",
+   "... more errors omitted"
+  ]
+ }
+]

@@ -1,0 +1,24 @@
+{
+  "format": 1,
+  "name": "Gold Rush",
+  "version": "1.0",
+  "author": "Lane Wars examples",
+  "description": "A fast, swingy game: more gold, quicker waves, shorter respawns and a cheaper Blink Dagger.",
+
+  "rules": {
+    "comment": "Every key in 'rules' is optional; anything left out keeps its normal value.",
+    "start_gold": 1500,
+    "passive_gold": 4,
+    "wave_interval": 22,
+    "first_wave_at": 5,
+    "hero_bounty_base": 200,
+    "respawn_max": 30,
+    "wave_melee": 4,
+    "siege_every": 3
+  },
+  "xp_table": [0, 180, 480, 870, 1320, 1830, 2400, 3000, 3675, 4425, 5250, 6150, 7125, 8175, 9300,
+               10500, 11775, 13125, 14550, 16050, 17700, 19200, 20700, 22200, 23700],
+  "items": [
+    { "name": "Blink Dagger", "cost": 1500 }
+  ]
+}

@@ -1,0 +1,21 @@
+[package]
+name = "moba_engine"
+version = "0.1.0"
+edition = "2021"
+description = "A Dota-style MOBA game engine in Rust, compiled to WebAssembly (zero dependencies)"
+license = "MIT"
+
+# cdylib -> the .wasm module the browser loads; rlib -> native tests and the headless example.
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Intentionally empty: the engine talks to JavaScript through a plain C ABI
+# (see src/ffi.rs), so no wasm-bindgen / wasm-pack is required.
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

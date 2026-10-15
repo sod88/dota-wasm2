@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "name": "Nightblade",
+  "version": "1.0",
+  "author": "Lane Wars examples",
+  "description": "Adds Nightblade, a melee assassin who dives with Death Mark, and the Shadow Cloak item.",
+
+  "items": [
+    { "name": "Shadow Cloak", "cost": 600, "agi": 8, "armor": 2, "ms": 10, "color": "#5b4b9a" }
+  ],
+
+  "heroes": [{
+    "name": "Nightblade", "title": "Agility - assassin", "primary": "agi",
+    "str": 18, "agi": 28, "int": 14, "gain_str": 2.0, "gain_agi": 3.2, "gain_int": 1.2,
+    "dmg_min": 30, "dmg_max": 36, "range": 110, "bat": 1.6, "ms": 185, "radius": 15,
+    "glyph": "moon", "color": "#d9ceff",
+    "build": ["Boots of Speed", "Shadow Cloak", "Blades of Attack", "Blink Dagger", "Executioner's Axe"],
+    "skill_order": [1, 0, 2],
+    "abilities": [
+      { "name": "Shadow Dart", "desc": "Throws a dart that pierces every enemy in a line.",
+        "cast": "line", "range": 600, "radius": 25, "mana": 50, "cd": [8, 7, 6, 5],
+        "dmg": [70, 110, 150, 190], "speed": 900, "icon": "arrow", "color": "#7e6bd6" },
+      { "name": "Venom Strike", "desc": "A poisoned blade that slows the target.",
+        "cast": "target", "fx": ["slow"], "range": 300, "mana": 60, "cd": 9,
+        "dmg": [50, 90, 130, 170], "dur": 3, "pct": [30, 40, 50, 60], "speed": 800, "color": "#6fbf4a" },
+      { "name": "Fleet Step", "desc": "Moves and attacks faster for a few seconds.",
+        "cast": "self_buff", "fx": ["haste", "aspd"], "mana": 40, "cd": 18, "dur": 5,
+        "pct": [30, 40, 50, 60], "pct2": [15, 20, 25, 30] },
+      { "name": "Death Mark", "desc": "Leaps to a point, stunning and wounding everything where it lands.",
+        "cast": "blink", "dtype": "pure", "fx": ["stun"], "max_level": 3, "req_level": [6, 12, 18],
+        "range": 450, "radius": 200, "mana": [150, 200, 250], "cd": [60, 50, 40],
+        "dmg": [200, 320, 440], "dur": [1, 1.5, 2], "aoe_on_land": true, "color": "#b04ad6" }
+    ]
+  }]
+}

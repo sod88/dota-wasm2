@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "name": "Wild Jungle",
+  "version": "1.0",
+  "author": "Lane Wars examples",
+  "description": "Tougher, richer jungle camps with two new neutral creeps that respawn twice as fast.",
+
+  "rules": { "camp_respawn": 30 },
+  "neutrals": [
+    { "name": "Troll Shaman", "hp": 520, "dmg_min": 26, "dmg_max": 32, "armor": 1, "range": 320,
+      "bat": 1.5, "ms": 100, "proj_speed": 600, "radius": 13, "vision": 300, "gold": 40, "xp": 55 },
+    { "name": "Stone Golem", "hp": 1600, "dmg_min": 45, "dmg_max": 60, "armor": 6, "range": 90,
+      "bat": 2.0, "ms": 80, "radius": 22, "vision": 260, "gold": 80, "xp": 120 },
+    { "name": "Ogre", "hp": 1300, "gold": 70 }
+  ],
+  "camps": [
+    ["Scrapper", "Scrapper", "Spitter"],
+    ["Brute", "Troll Shaman", "Troll Shaman"],
+    ["Stone Golem", "Ogre", "Troll Shaman"]
+  ]
+}
