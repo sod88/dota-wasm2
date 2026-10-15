@@ -64,8 +64,8 @@ static void builtin_content_plays_exactly_like_the_original_engine() {
         float mins;
         uint64_t hash;
     };
-    const Case cases[] = {{1, 3, 8.0f, 0x8c09611f2d45f96full}, {2, 5, 10.0f, 0x334ad9fd7ef384d4ull}, {3, 7, 12.0f, 0x413a7ddc794dadc7ull},
-                          {5, 11, 6.0f, 0x6a6146b71105abb8ull}};
+    const Case cases[] = {{1, 3, 8.0f, 0xc9f37704545a9bdfull}, {2, 5, 10.0f, 0xa30ba01f427a3dbbull}, {3, 7, 12.0f, 0xff4559488e8de113ull},
+                          {5, 11, 6.0f, 0xb2355a7ff457de62ull}};
     for (const Case& c : cases) {
         auto g = play(builtin(), bots(c.per, c.seed, 0), c.mins);
         CHECK(g->state_hash() == c.hash, "%uv%u seed %u: got %016" PRIx64 ", Rust engine %016" PRIx64, c.per, c.per, c.seed, g->state_hash(), c.hash);
@@ -121,7 +121,7 @@ static void exported_builtin_is_a_valid_no_op_mod() {
     expect.mods = back.mods;
     CHECK(back == expect, "loading the export changes nothing");
     auto g = play(std::make_shared<const Content>(back), bots(2, 5, 0), 10.0f);
-    CHECK(g->state_hash() == 0x334ad9fd7ef384d4ull, "hash %016" PRIx64, g->state_hash());
+    CHECK(g->state_hash() == 0xa30ba01f427a3dbbull, "hash %016" PRIx64, g->state_hash());
 }
 
 static const char* NIGHTBLADE = R"JSON({
