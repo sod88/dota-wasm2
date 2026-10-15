@@ -128,7 +128,7 @@ Content make_builtin_content() {
         h.primary = 0;
         h.str_ = 24.0f; h.agi = 12.0f; h.int_ = 14.0f;
         h.gain_str = 3.2f; h.gain_agi = 1.4f; h.gain_int = 1.2f;
-        h.dmg_min = 28.0f; h.dmg_max = 34.0f; h.range = 90.0f; h.bat = 1.7f; h.ms = 160.0f; h.proj_speed = 0.0f; h.radius = 17.0f;
+        h.dmg_min = 28.0f; h.dmg_max = 34.0f; h.range = 150.0f; h.bat = 1.7f; h.ms = 170.0f; h.proj_speed = 0.0f; h.radius = 17.0f;
         h.build = {2, 7, 6, 9, 18, 14, 19};  // Belt of Might, Boots of Speed, Chainmail, Vitality Booster, Blink Dagger, Aegis Plate, Titan Heart
         h.skill_order = {{0, 1, 2}};
         h.glyph = "shield";
@@ -140,7 +140,7 @@ Content make_builtin_content() {
         a.desc = "Hurls a hammer at an enemy: magic damage and a stun.";
         a.cast = Cast::Target; a.dtype = DmgType::Magical; a.fx = FX_STUN;
         a.max_level = 4; a.req_level = {{1, 3, 5, 7}};
-        a.range = {{220.0f, 220.0f, 220.0f, 220.0f}};
+        a.range = {{280.0f, 280.0f, 280.0f, 280.0f}};
         a.radius = {{0.0f, 0.0f, 0.0f, 0.0f}};
         a.mana = {{60.0f, 70.0f, 80.0f, 90.0f}};
         a.cd = {{11.0f, 10.0f, 9.0f, 8.0f}};

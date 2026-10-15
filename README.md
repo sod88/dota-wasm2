@@ -126,7 +126,10 @@ NaN-aware min/max, stable sorting, and the exact pop order of Rust's `BinaryHeap
 - **3v3 and 5v5 bot matches rarely finish.** Bots only push towers when no enemy hero is within 900
   units (see `think_bot` in `ai.rs` / `ai.cpp`). 1v1 and 2v2 finish in about 20–40 minutes. Playing
   yourself is unaffected.
-- Bot-only matches are won by Dire more often than by Radiant; the cause hasn't been looked into yet.
+- Bots play the Warden poorly in lane: about 5 last hits by 10 minutes, against 12–15 for the ranged
+  heroes. The map itself is fair (mirror matches split 50/50), but because Dire gets hero `h + 1`, the
+  default 1v1 (Warden vs Ranger) used to go to Dire about 68% of the time. A Warden buff brought that
+  to about 57%; better melee last-hitting in the bot AI would close the rest.
 - Bots never farm the jungle and don't coordinate pushes or rotations.
 - Mods change data, not behaviour: new cast types or item actives need engine code.
 - One map, no sound.
