@@ -348,21 +348,36 @@ impl Game {
         }
 
         // --- last hitting & denying
+        // Judge each creep by the hp it will have when our hit would land, not by its hp now:
+        // a melee hero has to walk up and wind up, and the creeps keep hitting in the meantime.
         let reach_of = |s: &Game, e: usize| s.units[ui].range + s.units[e].radius + s.units[ui].radius * 0.5 + 35.0;
         let mut last_hit: Option<(f32, u32)> = None;
         let mut soft: Option<(f32, u32)> = None;
+        let mut stalk: Option<(f32, usize)> = None;
         for &e in &enemy_creeps {
             let v = &self.units[e];
-            if pos.dist(v.pos) > reach_of(self, e) {
-                continue;
-            }
+            let (vhp, vid, vpos) = (v.hp, v.id, v.pos);
             let exp = my_dmg * armor_multiplier(v.armor);
-            if v.hp <= exp * 1.05 {
-                if last_hit.map_or(true, |(h, _)| v.hp < h) {
-                    last_hit = Some((v.hp, v.id));
+            let d = pos.dist(vpos);
+            let t_hit = self.bot_hit_time(ui, e);
+            let hp_at_hit = vhp - self.incoming_damage(e, ui, t_hit);
+            if d <= reach_of(self, e) + 140.0 && hp_at_hit <= exp * 1.05 && hp_at_hit > 0.0 {
+                if last_hit.map_or(true, |(h, _)| vhp < h) {
+                    last_hit = Some((vhp, vid));
                 }
-            } else if v.hp <= exp * 2.3 && soft.map_or(true, |(h, _)| v.hp < h) {
-                soft = Some((v.hp, v.id));
+            } else if d <= reach_of(self, e) && vhp <= exp * 2.3 {
+                // Only chip at a creep when our next swing will still be in time for the kill.
+                let at = self.units[ui].attack_time();
+                let after = vhp - exp - self.incoming_damage(e, ui, t_hit + at);
+                if after > 0.0 && soft.map_or(true, |(h, _)| vhp < h) {
+                    soft = Some((vhp, vid));
+                }
+            }
+            if d <= 520.0 && self.tower_threat_at(team, vpos).is_none() {
+                let soon = vhp - self.incoming_damage(e, ui, 2.0);
+                if stalk.map_or(true, |(h, _)| soon < h) {
+                    stalk = Some((soon, e));
+                }
             }
         }
         let mut deny: Option<u32> = None;
@@ -416,14 +431,73 @@ impl Game {
 
         // --- wait for a last hit, or walk to the lane front
         if !enemy_creeps.is_empty() && enemy_creeps.iter().any(|&e| pos.dist(self.units[e].pos) < range + 220.0) {
-            self.units[ui].order = Order::Stay;
+            // Stand within reach of the creep that will die first, so the kill is one swing away.
             self.units[ui].target = 0;
+            self.units[ui].order = Order::Stay;
+            if let Some((_, e)) = stalk {
+                let ep = self.units[e].pos;
+                let want = reach_of(self, e) - 45.0;
+                if pos.dist(ep) > want {
+                    let dest = self.map.nearest_walkable(ep + (pos - ep).norm() * want);
+                    self.units[ui].order = Order::Move(dest);
+                }
+            }
             return;
         }
         let hold = self.lane_hold_pos(team, lane);
         self.units[ui].target = 0;
         self.units[ui].order = Order::AttackMove(hold);
         let _ = id;
+    }
+
+    /// Seconds until a hit from bot `ui` on unit `ti` would land, starting now.
+    fn bot_hit_time(&self, ui: usize, ti: usize) -> f32 {
+        let u = &self.units[ui];
+        let t = &self.units[ti];
+        let d = u.pos.dist(t.pos);
+        let reach = u.range + t.radius + u.radius * 0.5;
+        let walk = (d - reach).max(0.0) / u.speed().max(1.0);
+        let at = u.attack_time();
+        let mut time = walk.max(u.attack_cd).max(u.swing_t) + (at * 0.30).max(0.1);
+        if u.proj_speed > 0.0 {
+            time += d.min(reach) / u.proj_speed;
+        }
+        time
+    }
+
+    /// Damage other units will deal to `ti` within the next `t` seconds (projectiles in flight
+    /// plus the swings of everything attacking it), ignoring unit `skip`.
+    fn incoming_damage(&self, ti: usize, skip: usize, t: f32) -> f32 {
+        let (tid, tpos, tteam, mult) = {
+            let v = &self.units[ti];
+            (v.id, v.pos, v.team, armor_multiplier(v.armor))
+        };
+        let skip_id = self.units[skip].id;
+        let mut total = 0.0_f32;
+        for p in &self.projs {
+            if p.homing == tid && p.src != skip_id && p.ability == 255 && p.pos.dist(tpos) <= p.speed * t {
+                total += p.dmg * mult;
+            }
+        }
+        for (j, a) in self.units.iter().enumerate() {
+            if j == skip || !a.alive || a.team == tteam || a.dmg_max <= 0.0 {
+                continue;
+            }
+            let swinging = a.swing_t > 0.0 && a.swing_target == tid;
+            if !swinging && (a.target != tid || !self.in_attack_range(j, ti)) {
+                continue;
+            }
+            let at = a.attack_time();
+            let travel = if a.proj_speed > 0.0 { a.pos.dist(tpos) / a.proj_speed } else { 0.0 };
+            let mut hit = if swinging { a.swing_t } else { a.attack_cd + (at * 0.30).max(0.1) } + travel;
+            let mut n = 0;
+            while hit <= t && n < 8 {
+                total += a.avg_damage() * mult;
+                hit += at;
+                n += 1;
+            }
+        }
+        total
     }
 
     fn best_ability_range(&self, ui: usize) -> f32 {

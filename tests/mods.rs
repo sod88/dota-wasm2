@@ -26,11 +26,11 @@ fn bots(per_team: u8, seed: u32, hero: u8) -> Config {
 }
 
 /// Hashes of the built-in content. First recorded before the engine became data-driven (the refactor
-/// changed nothing); re-recorded when the Warden was rebalanced. Any balance change must update them here and
+/// changed nothing); re-recorded when the Warden was rebalanced and when bots learned to predict last hits. Any balance change must update them here and
 /// in cpp/tests/engine_tests.cpp.
 #[test]
 fn builtin_content_still_plays_exactly_like_the_original_engine() {
-    for (per, seed, mins, hash) in [(1, 3, 8.0, 0xc9f37704545a9bdf_u64), (2, 5, 10.0, 0xa30ba01f427a3dbb), (3, 7, 12.0, 0xff4559488e8de113), (5, 11, 6.0, 0xb2355a7ff457de62)] {
+    for (per, seed, mins, hash) in [(1, 3, 8.0, 0x7c1a7d559e22af65_u64), (2, 5, 10.0, 0x9973291e5d27b766), (3, 7, 12.0, 0x28e896966a9369fe), (5, 11, 6.0, 0x960501e309a6dcd1)] {
         let g = play(builtin(), bots(per, seed, 0), mins);
         assert_eq!(g.state_hash(), hash, "{}v{} seed {}", per, per, seed);
     }
@@ -82,7 +82,7 @@ fn exported_builtin_is_a_valid_no_op_mod() {
     // and exporting what was loaded gives the same text again
     assert_eq!(back.to_mod_json().replace("\"name\": \"Built-in content\"", ""), exported.replace("\"name\": \"Built-in content\"", ""));
     let g = play(leak(back), bots(2, 5, 0), 10.0);
-    assert_eq!(g.state_hash(), 0xa30ba01f427a3dbb);
+    assert_eq!(g.state_hash(), 0x9973291e5d27b766);
 }
 
 #[test]
