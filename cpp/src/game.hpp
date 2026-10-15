@@ -192,6 +192,8 @@ class Game {
     std::optional<size_t> tower_threat_at(uint8_t team, Vec2 p) const;
     void think_bot(size_t ui);
     float best_ability_range(size_t ui) const;
+    float bot_hit_time(size_t ui, size_t ti) const;
+    float incoming_damage(size_t ti, size_t skip, float t) const;
     void bot_use_consumables(size_t ui, float hp_frac, float mana_frac, bool enemy_near);
     void bot_escape(size_t ui, const std::vector<size_t>& enemy_heroes, Vec2 base);
     void bot_fight_abilities(size_t ui, size_t target, const std::vector<size_t>& enemy_heroes);

@@ -324,24 +324,45 @@ void Game::think_bot(size_t ui) {
     }
 
     // --- last hitting & denying
+    // Judge each creep by the hp it will have when our hit would land, not by its hp now:
+    // a melee hero has to walk up and wind up, and the creeps keep hitting in the meantime.
     auto reach_of = [&](size_t e) { return units[ui].range + units[e].radius + units[ui].radius * 0.5f + 35.0f; };
-    bool has_lh = false, has_soft = false;
-    float lh_hp = 0.0f, soft_hp = 0.0f;
+    bool has_lh = false, has_soft = false, has_stalk = false;
+    float lh_hp = 0.0f, soft_hp = 0.0f, stalk_hp = 0.0f;
     uint32_t lh_id = 0, soft_id = 0;
+    size_t stalk = 0;
     for (size_t e : enemy_creeps) {
         const Unit& v = units[e];
-        if (pos.dist(v.pos) > reach_of(e)) continue;
+        float vhp = v.hp;
+        uint32_t vid = v.id;
+        Vec2 vpos = v.pos;
         float exp = my_dmg * armor_multiplier(v.armor);
-        if (v.hp <= exp * 1.05f) {
-            if (!has_lh || v.hp < lh_hp) {
+        float d = pos.dist(vpos);
+        float t_hit = bot_hit_time(ui, e);
+        float hp_at_hit = vhp - incoming_damage(e, ui, t_hit);
+        if (d <= reach_of(e) + 140.0f && hp_at_hit <= exp * 1.05f && hp_at_hit > 0.0f) {
+            if (!has_lh || vhp < lh_hp) {
                 has_lh = true;
-                lh_hp = v.hp;
-                lh_id = v.id;
+                lh_hp = vhp;
+                lh_id = vid;
             }
-        } else if (v.hp <= exp * 2.3f && (!has_soft || v.hp < soft_hp)) {
-            has_soft = true;
-            soft_hp = v.hp;
-            soft_id = v.id;
+        } else if (d <= reach_of(e) && vhp <= exp * 2.3f) {
+            // Only chip at a creep when our next swing will still be in time for the kill.
+            float at = units[ui].attack_time();
+            float after = vhp - exp - incoming_damage(e, ui, t_hit + at);
+            if (after > 0.0f && (!has_soft || vhp < soft_hp)) {
+                has_soft = true;
+                soft_hp = vhp;
+                soft_id = vid;
+            }
+        }
+        if (d <= 520.0f && !tower_threat_at(team, vpos)) {
+            float soon = vhp - incoming_damage(e, ui, 2.0f);
+            if (!has_stalk || soon < stalk_hp) {
+                has_stalk = true;
+                stalk_hp = soon;
+                stalk = e;
+            }
         }
     }
     bool has_deny = false;
@@ -407,13 +428,65 @@ void Game::think_bot(size_t ui) {
     // --- wait for a last hit, or walk to the lane front
     if (!enemy_creeps.empty() &&
         std::any_of(enemy_creeps.begin(), enemy_creeps.end(), [&](size_t e) { return pos.dist(units[e].pos) < range + 220.0f; })) {
-        units[ui].order = Order::stay();
+        // Stand within reach of the creep that will die first, so the kill is one swing away.
         units[ui].target = 0;
+        units[ui].order = Order::stay();
+        if (has_stalk) {
+            Vec2 ep = units[stalk].pos;
+            float want = reach_of(stalk) - 45.0f;
+            if (pos.dist(ep) > want) {
+                Vec2 dest = map.nearest_walkable(ep + (pos - ep).norm() * want);
+                units[ui].order = Order::move(dest);
+            }
+        }
         return;
     }
     Vec2 hold = lane_hold_pos(team, lane);
     units[ui].target = 0;
     units[ui].order = Order::attack_move(hold);
+}
+
+/// Seconds until a hit from bot `ui` on unit `ti` would land, starting now.
+float Game::bot_hit_time(size_t ui, size_t ti) const {
+    const Unit& u = units[ui];
+    const Unit& t = units[ti];
+    float d = u.pos.dist(t.pos);
+    float reach = u.range + t.radius + u.radius * 0.5f;
+    float walk = fmax_rs(d - reach, 0.0f) / fmax_rs(u.speed(), 1.0f);
+    float at = u.attack_time();
+    float time = fmax_rs(fmax_rs(walk, u.attack_cd), u.swing_t) + fmax_rs(at * 0.30f, 0.1f);
+    if (u.proj_speed > 0.0f) time += fmin_rs(d, reach) / u.proj_speed;
+    return time;
+}
+
+/// Damage other units will deal to `ti` within the next `t` seconds (projectiles in flight
+/// plus the swings of everything attacking it), ignoring unit `skip`.
+float Game::incoming_damage(size_t ti, size_t skip, float t) const {
+    uint32_t tid = units[ti].id;
+    Vec2 tpos = units[ti].pos;
+    uint8_t tteam = units[ti].team;
+    float mult = armor_multiplier(units[ti].armor);
+    uint32_t skip_id = units[skip].id;
+    float total = 0.0f;
+    for (const Proj& p : projs) {
+        if (p.homing == tid && p.src != skip_id && p.ability == 255 && p.pos.dist(tpos) <= p.speed * t) total += p.dmg * mult;
+    }
+    for (size_t j = 0; j < units.size(); ++j) {
+        const Unit& a = units[j];
+        if (j == skip || !a.alive || a.team == tteam || a.dmg_max <= 0.0f) continue;
+        bool swinging = a.swing_t > 0.0f && a.swing_target == tid;
+        if (!swinging && (a.target != tid || !in_attack_range(j, ti))) continue;
+        float at = a.attack_time();
+        float travel = a.proj_speed > 0.0f ? a.pos.dist(tpos) / a.proj_speed : 0.0f;
+        float hit = (swinging ? a.swing_t : a.attack_cd + fmax_rs(at * 0.30f, 0.1f)) + travel;
+        int n = 0;
+        while (hit <= t && n < 8) {
+            total += a.avg_damage() * mult;
+            hit += at;
+            ++n;
+        }
+    }
+    return total;
 }
 
 float Game::best_ability_range(size_t ui) const {
