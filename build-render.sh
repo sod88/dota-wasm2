@@ -11,6 +11,7 @@ cd "$(dirname "$0")"
 OUT=web/render3d.wasm
 SRC=cpp/render/render3d.cpp
 FLAGS=(-std=c++17 -O2 -nostdlib -fno-exceptions -fno-rtti -Wall -Wextra)
+[ -n "${WERROR:-}" ] && FLAGS+=(-Werror) # CI sets WERROR=1
 LINK=(-Wl,--no-entry -Wl,--strip-all)
 
 # A clang that can target wasm32 and has wasm-ld next to it (or on PATH)

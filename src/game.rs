@@ -239,13 +239,12 @@ impl Game {
     fn build_heroes(&mut self) {
         let per = self.cfg.heroes_per_team.clamp(1, 5) as usize;
         for team in 0..2u8 {
-            for k in 0..per {
+            for (k, &lane) in LANE_ORDER.iter().enumerate().take(per) {
                 let def = if team == 0 {
                     ((self.cfg.player_hero as usize + k) % self.content.heroes.len()) as u8
                 } else {
                     ((self.cfg.player_hero as usize + 1 + k) % self.content.heroes.len()) as u8
                 };
-                let lane = LANE_ORDER[k];
                 let is_player = team == 0 && k == 0;
                 let bot = !is_player || self.cfg.player_is_bot;
                 let uid = self.spawn_hero(def, team, lane, k, bot);
@@ -493,7 +492,7 @@ impl Game {
                 let mut comp: Vec<CreepDef> = Vec::new();
                 comp.extend((0..ct.rules.wave_melee).map(|_| ct.melee));
                 comp.extend((0..ct.rules.wave_ranged).map(|_| ct.ranged));
-                if ct.rules.siege_every > 0 && wave % ct.rules.siege_every == 0 {
+                if ct.rules.siege_every > 0 && wave.is_multiple_of(ct.rules.siege_every) {
                     comp.extend((0..ct.rules.wave_siege).map(|_| ct.siege));
                 }
                 for (k, def) in comp.iter().enumerate() {

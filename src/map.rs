@@ -57,11 +57,7 @@ pub struct Map {
 
 impl Map {
     pub fn generate() -> Map {
-        let mut m = Map {
-            terrain: vec![T_BLOCKED; GRID * GRID],
-            lanes: [Vec::new(), Vec::new(), Vec::new()],
-            camps: Vec::new(),
-        };
+        let mut m = Map { terrain: vec![T_BLOCKED; GRID * GRID], lanes: [Vec::new(), Vec::new(), Vec::new()], camps: Vec::new() };
         let corner_tl = Vec2::new(280.0, 280.0);
         let corner_br = Vec2::new(2120.0, 2120.0);
         m.lanes[Lane::Top.idx()] = vec![BASE_RADIANT, corner_tl, BASE_DIRE];
@@ -80,14 +76,8 @@ impl Map {
         m.carve_circle(BASE_DIRE, BASE_RADIUS, T_GROUND);
 
         // Radiant-half camps; the Dire half is the point-mirror image.
-        let radiant_camps: [(f32, f32, u8); 6] = [
-            (600.0, 1000.0, 0),
-            (520.0, 1450.0, 1),
-            (900.0, 1250.0, 2),
-            (1250.0, 1750.0, 1),
-            (1650.0, 1900.0, 0),
-            (1350.0, 1550.0, 2),
-        ];
+        let radiant_camps: [(f32, f32, u8); 6] =
+            [(600.0, 1000.0, 0), (520.0, 1450.0, 1), (900.0, 1250.0, 2), (1250.0, 1750.0, 1), (1650.0, 1900.0, 0), (1350.0, 1550.0, 2)];
         for &(x, y, tier) in &radiant_camps {
             for pos in [Vec2::new(x, y), Vec2::new(WORLD - x, WORLD - y)] {
                 m.carve_circle(pos, 70.0, T_GROUND);
@@ -112,12 +102,7 @@ impl Map {
         m.carve_capsule(corner_tl, corner_br, RIVER_HALF_WIDTH, T_RIVER);
 
         // Rocks: a pair in the river (forces detours) and one in each base.
-        for &(x, y, r) in &[
-            (800.0, 800.0, 34.0),
-            (1600.0, 1600.0, 34.0),
-            (150.0, 1950.0, 34.0),
-            (2250.0, 450.0, 34.0),
-        ] {
+        for &(x, y, r) in &[(800.0, 800.0, 34.0), (1600.0, 1600.0, 34.0), (150.0, 1950.0, 34.0), (2250.0, 450.0, 34.0)] {
             m.block_circle(Vec2::new(x, y), r);
         }
         m
@@ -166,11 +151,7 @@ impl Map {
 
     #[inline]
     pub fn cell_walkable(&self, cx: i32, cy: i32) -> bool {
-        cx >= 0
-            && cy >= 0
-            && (cx as usize) < GRID
-            && (cy as usize) < GRID
-            && self.terrain[cy as usize * GRID + cx as usize] != T_BLOCKED
+        cx >= 0 && cy >= 0 && (cx as usize) < GRID && (cy as usize) < GRID && self.terrain[cy as usize * GRID + cx as usize] != T_BLOCKED
     }
 
     #[inline]
@@ -207,7 +188,7 @@ impl Map {
                         continue;
                     }
                     let d = Self::cell_center(cx + dx, cy + dy).dist_sq(p);
-                    if best.map_or(true, |(bd, _)| d < bd) {
+                    if best.is_none_or(|(bd, _)| d < bd) {
                         best = Some((d, (cx + dx, cy + dy)));
                     }
                 }
@@ -224,9 +205,7 @@ impl Map {
         if self.walkable(p) {
             return p;
         }
-        self.nearest_walkable_cell(p)
-            .map(|(x, y)| Self::cell_center(x, y))
-            .unwrap_or(p)
+        self.nearest_walkable_cell(p).map(|(x, y)| Self::cell_center(x, y)).unwrap_or(p)
     }
 
     pub fn lane_length(&self, lane: Lane) -> f32 {

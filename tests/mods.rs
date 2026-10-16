@@ -31,7 +31,12 @@ fn bots(per_team: u8, seed: u32, hero: u8) -> Config {
 /// cpp/tests/engine_tests.cpp.
 #[test]
 fn builtin_content_still_plays_exactly_like_the_original_engine() {
-    for (per, seed, mins, hash) in [(1, 3, 8.0, 0x1af890c0b3bb7dbc_u64), (2, 5, 10.0, 0x7c56ce239b831c77), (3, 7, 12.0, 0x03ff1fc77ff8c04d), (5, 11, 6.0, 0x517f4dbc679d5fb3)] {
+    for (per, seed, mins, hash) in [
+        (1, 3, 8.0, 0x1af890c0b3bb7dbc_u64),
+        (2, 5, 10.0, 0x7c56ce239b831c77),
+        (3, 7, 12.0, 0x03ff1fc77ff8c04d),
+        (5, 11, 6.0, 0x517f4dbc679d5fb3),
+    ] {
         let g = play(builtin(), bots(per, seed, 0), mins);
         assert_eq!(g.state_hash(), hash, "{}v{} seed {}", per, per, seed);
     }
@@ -89,7 +94,8 @@ fn exported_builtin_is_a_valid_no_op_mod() {
 #[test]
 fn limits_on_hero_and_item_counts() {
     let ab = r#"{"name":"A","cast":"target"}"#;
-    let heroes: Vec<String> = (0..MAX_HEROES + 1).map(|i| format!(r#"{{"name":"H{}","abilities":[{},{},{},{}]}}"#, i, ab, ab, ab, ab)).collect();
+    let heroes: Vec<String> =
+        (0..MAX_HEROES + 1).map(|i| format!(r#"{{"name":"H{}","abilities":[{},{},{},{}]}}"#, i, ab, ab, ab, ab)).collect();
     let err = load(builtin(), &format!(r#"{{"heroes":[{}]}}"#, heroes.join(","))).unwrap_err();
     assert_eq!(err, vec![format!("$.heroes: too many heroes (at most {})", MAX_HEROES)]);
     let items: Vec<String> = (0..MAX_ITEMS).map(|i| format!(r#"{{"name":"I{}","cost":1}}"#, i)).collect();
@@ -162,7 +168,8 @@ fn mods_stack_in_order() {
 
 #[test]
 fn rules_really_drive_the_simulation() {
-    let c = leak(load(builtin(), r#"{"rules":{"start_gold":1234,"wave_melee":0,"wave_ranged":0,"siege_every":0,"first_wave_at":1}}"#).unwrap());
+    let c =
+        leak(load(builtin(), r#"{"rules":{"start_gold":1234,"wave_melee":0,"wave_ranged":0,"siege_every":0,"first_wave_at":1}}"#).unwrap());
     let mut g = Game::with_content(Config::default(), c);
     assert_eq!(g.heroes[0].gold, 1234.0);
     for _ in 0..(40 * 30) {

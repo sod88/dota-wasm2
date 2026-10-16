@@ -196,7 +196,19 @@ impl Content {
             .iter()
             .map(|it| {
                 let mut v = vec![("name".to_string(), s(it.name)), ("cost".into(), f(it.cost))];
-                for (k, x) in [("str", it.str_), ("agi", it.agi), ("int", it.int), ("dmg", it.dmg), ("armor", it.armor), ("hp", it.hp), ("mana", it.mana), ("aspd", it.aspd), ("ms", it.ms), ("hpreg", it.hpreg), ("mpreg", it.mpreg)] {
+                for (k, x) in [
+                    ("str", it.str_),
+                    ("agi", it.agi),
+                    ("int", it.int),
+                    ("dmg", it.dmg),
+                    ("armor", it.armor),
+                    ("hp", it.hp),
+                    ("mana", it.mana),
+                    ("aspd", it.aspd),
+                    ("ms", it.ms),
+                    ("hpreg", it.hpreg),
+                    ("mpreg", it.mpreg),
+                ] {
                     if x != 0.0 {
                         v.push((k.to_string(), f(x)));
                     }
@@ -218,7 +230,14 @@ impl Content {
             .collect();
         o.push(("items".into(), Value::Arr(items)));
         let creep = |c: &CreepDef| creep_value(c);
-        o.push(("creeps".into(), Value::Obj(vec![("melee".into(), creep(&self.melee)), ("ranged".into(), creep(&self.ranged)), ("siege".into(), creep(&self.siege))])));
+        o.push((
+            "creeps".into(),
+            Value::Obj(vec![
+                ("melee".into(), creep(&self.melee)),
+                ("ranged".into(), creep(&self.ranged)),
+                ("siege".into(), creep(&self.siege)),
+            ]),
+        ));
         o.push(("neutrals".into(), Value::Arr(self.neutrals.iter().map(creep).collect())));
         o.push((
             "camps".into(),
@@ -244,7 +263,15 @@ impl Content {
                     .collect(),
             ),
         ));
-        o.push(("ancient".into(), Value::Obj(vec![("hp".into(), f(self.ancient.hp)), ("armor".into(), f(self.ancient.armor)), ("radius".into(), f(self.ancient.radius)), ("vision".into(), f(self.ancient.vision))])));
+        o.push((
+            "ancient".into(),
+            Value::Obj(vec![
+                ("hp".into(), f(self.ancient.hp)),
+                ("armor".into(), f(self.ancient.armor)),
+                ("radius".into(), f(self.ancient.radius)),
+                ("vision".into(), f(self.ancient.vision)),
+            ]),
+        ));
         let heroes: Vec<Value> = self
             .heroes
             .iter()
@@ -677,7 +704,15 @@ fn entry_name(cx: &mut Cx, path: &str, obj: &[(String, Value)]) -> Option<String
     }
 }
 
-fn patch_hero(cx: &mut Cx, path: &str, obj: &[(String, Value)], c_items: &[ItemDef], h: &mut HeroDef, abilities: &mut [AbilityDef], is_new: bool) {
+fn patch_hero(
+    cx: &mut Cx,
+    path: &str,
+    obj: &[(String, Value)],
+    c_items: &[ItemDef],
+    h: &mut HeroDef,
+    abilities: &mut [AbilityDef],
+    is_new: bool,
+) {
     let mut seen: Vec<String> = Vec::new();
     for (k, v) in obj {
         if k == "comment" {
@@ -770,7 +805,14 @@ fn patch_hero(cx: &mut Cx, path: &str, obj: &[(String, Value)], c_items: &[ItemD
             "abilities" => {
                 if let Some(arr) = get_arr(cx, &p, v) {
                     if arr.len() > 4 || (is_new && arr.len() != 4) {
-                        cx.err(&p, if is_new { "a new hero needs exactly 4 abilities".to_string() } else { "expected at most 4 abilities".to_string() });
+                        cx.err(
+                            &p,
+                            if is_new {
+                                "a new hero needs exactly 4 abilities".to_string()
+                            } else {
+                                "expected at most 4 abilities".to_string()
+                            },
+                        );
                     } else {
                         for (i, av) in arr.iter().enumerate() {
                             if matches!(av, Value::Null) && !is_new {
@@ -920,7 +962,23 @@ fn patch_ancient(cx: &mut Cx, path: &str, obj: &[(String, Value)], a: &mut Ancie
     }
 }
 
-const TOP_KEYS: [&str; 15] = ["format", "name", "version", "author", "description", "replace", "rules", "xp_table", "items", "creeps", "neutrals", "camps", "towers", "ancient", "heroes"];
+const TOP_KEYS: [&str; 15] = [
+    "format",
+    "name",
+    "version",
+    "author",
+    "description",
+    "replace",
+    "rules",
+    "xp_table",
+    "items",
+    "creeps",
+    "neutrals",
+    "camps",
+    "towers",
+    "ancient",
+    "heroes",
+];
 
 /// Apply one mod (JSON text) on top of `base`. On any error nothing is applied and the
 /// returned list holds up to 20 messages, each starting with the path of the offending value.
@@ -961,7 +1019,12 @@ pub fn apply_mod(base: &Content, bytes: &[u8]) -> Result<Content, Vec<String>> {
             None => String::new(),
         }
     };
-    let info = ModInfo { name: meta(&mut cx, "name", 60), version: meta(&mut cx, "version", 20), author: meta(&mut cx, "author", 60), description: meta(&mut cx, "description", 300) };
+    let info = ModInfo {
+        name: meta(&mut cx, "name", 60),
+        version: meta(&mut cx, "version", 20),
+        author: meta(&mut cx, "author", 60),
+        description: meta(&mut cx, "description", 300),
+    };
 
     // ---- replace
     let (mut rep_heroes, mut rep_items, mut rep_neutrals) = (false, false, false);
@@ -1080,7 +1143,23 @@ pub fn apply_mod(base: &Content, bytes: &[u8]) -> Result<Content, Vec<String>> {
                         c.neutrals[idx] = n;
                     }
                     None => {
-                        let mut n = CreepDef { name: intern(&name), kind: Kind::Neutral, hp: 0.0, dmg_min: 0.0, dmg_max: 0.0, armor: 0.0, range: 70.0, bat: 1.0, ms: 100.0, proj_speed: 0.0, radius: 12.0, vision: 260.0, gold: 0.0, xp: 0.0, bldg_mult: 1.0 };
+                        let mut n = CreepDef {
+                            name: intern(&name),
+                            kind: Kind::Neutral,
+                            hp: 0.0,
+                            dmg_min: 0.0,
+                            dmg_max: 0.0,
+                            armor: 0.0,
+                            range: 70.0,
+                            bat: 1.0,
+                            ms: 100.0,
+                            proj_speed: 0.0,
+                            radius: 12.0,
+                            vision: 260.0,
+                            gold: 0.0,
+                            xp: 0.0,
+                            bldg_mult: 1.0,
+                        };
                         patch_creep(&mut cx, &p, o, &mut n, true, false);
                         c.neutrals.push(n);
                     }
@@ -1202,9 +1281,7 @@ pub fn apply_mod(base: &Content, bytes: &[u8]) -> Result<Content, Vec<String>> {
                         let mut ab = [c.abilities[idx * 4], c.abilities[idx * 4 + 1], c.abilities[idx * 4 + 2], c.abilities[idx * 4 + 3]];
                         patch_hero(&mut cx, &p, o, &items, &mut h, &mut ab, false);
                         c.heroes[idx] = h;
-                        for s in 0..4 {
-                            c.abilities[idx * 4 + s] = ab[s];
-                        }
+                        c.abilities[idx * 4..idx * 4 + 4].copy_from_slice(&ab);
                     }
                     None => {
                         let mut h = HeroDef {

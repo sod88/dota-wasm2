@@ -436,11 +436,11 @@ impl Game {
                 push[b] += dir * (overlap * fb);
             }
         }
-        for i in 0..n {
-            if push[i].len_sq() < 1e-8 {
+        for (i, p) in push.into_iter().enumerate() {
+            if p.len_sq() < 1e-8 {
                 continue;
             }
-            let np = self.units[i].pos + push[i];
+            let np = self.units[i].pos + p;
             if self.map.walkable(np) {
                 self.units[i].pos = np;
             }
@@ -519,6 +519,7 @@ impl Game {
     }
 
     /// Damage plus any stun / root / slow carried by an ability or projectile.
+    #[allow(clippy::too_many_arguments)]
     pub fn apply_effects(&mut self, src: u32, di: usize, dmg: f32, dtype: DmgType, fx: u8, dur: f32, pct: f32) {
         if dmg > 0.0 {
             self.deal_damage(src, di, dmg, dtype);
@@ -654,13 +655,8 @@ impl Game {
             Kind::Tower | Kind::Ancient => {
                 // Everyone on the destroying team shares the bounty.
                 if kteam <= 1 && kteam != vteam {
-                    let ids: Vec<usize> = self
-                        .units
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, u)| u.is_hero() && u.team == kteam)
-                        .map(|(i, _)| i)
-                        .collect();
+                    let ids: Vec<usize> =
+                        self.units.iter().enumerate().filter(|(_, u)| u.is_hero() && u.team == kteam).map(|(i, _)| i).collect();
                     for ui in ids {
                         self.add_gold(ui, vgold);
                         let id = self.units[ui].id;
