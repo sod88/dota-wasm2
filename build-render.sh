@@ -10,7 +10,7 @@ cd "$(dirname "$0")"
 
 OUT=web/render3d.wasm
 SRC=cpp/render/render3d.cpp
-FLAGS=(-std=c++17 -O2 -nostdlib -fno-exceptions -fno-rtti -Wall -Wextra)
+FLAGS=(-std=c++20 -O2 -nostdlib -fno-exceptions -fno-rtti -Wall -Wextra)
 [ -n "${WERROR:-}" ] && FLAGS+=(-Werror) # CI sets WERROR=1
 LINK=(-Wl,--no-entry -Wl,--strip-all)
 
