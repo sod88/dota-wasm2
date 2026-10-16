@@ -42,23 +42,110 @@ pub const ABI_VERSION: u32 = 2;
 
 /// One row per visible unit.
 pub const UNIT_FIELDS: &[&str] = &[
-    "id", "kind", "def", "team", "alive", "x", "y", "facing", "radius", "hp", "max_hp", "mana", "max_mana", "order", "target",
-    "visible", "swing_t", "swing_len", "status", "level", "hero", "range", "vision", "armor", "speed", "dmg",
+    "id",
+    "kind",
+    "def",
+    "team",
+    "alive",
+    "x",
+    "y",
+    "facing",
+    "radius",
+    "hp",
+    "max_hp",
+    "mana",
+    "max_mana",
+    "order",
+    "target",
+    "visible",
+    "swing_t",
+    "swing_len",
+    "status",
+    "level",
+    "hero",
+    "range",
+    "vision",
+    "armor",
+    "speed",
+    "dmg",
 ];
 /// One row per hero (both teams) — scoreboard and the player's HUD.
 pub const HERO_FIELDS: &[&str] = &[
-    "unit", "def", "team", "level", "xp", "xp_prev", "xp_next", "skill_pts", "gold", "networth", "kills", "deaths", "assists",
-    "last_hits", "denies", "respawn", "bot", "alive", "ab0", "ab1", "ab2", "ab3", "cd0", "cd1", "cd2", "cd3", "it0", "it1", "it2",
-    "it3", "it4", "it5", "ch0", "ch1", "ch2", "ch3", "ch4", "ch5", "icd0", "icd1", "icd2", "icd3", "icd4", "icd5", "str", "agi",
-    "int", "dmg_min", "dmg_max", "armor", "ms", "atk_time", "hp_regen", "mana_regen",
+    "unit",
+    "def",
+    "team",
+    "level",
+    "xp",
+    "xp_prev",
+    "xp_next",
+    "skill_pts",
+    "gold",
+    "networth",
+    "kills",
+    "deaths",
+    "assists",
+    "last_hits",
+    "denies",
+    "respawn",
+    "bot",
+    "alive",
+    "ab0",
+    "ab1",
+    "ab2",
+    "ab3",
+    "cd0",
+    "cd1",
+    "cd2",
+    "cd3",
+    "it0",
+    "it1",
+    "it2",
+    "it3",
+    "it4",
+    "it5",
+    "ch0",
+    "ch1",
+    "ch2",
+    "ch3",
+    "ch4",
+    "ch5",
+    "icd0",
+    "icd1",
+    "icd2",
+    "icd3",
+    "icd4",
+    "icd5",
+    "str",
+    "agi",
+    "int",
+    "dmg_min",
+    "dmg_max",
+    "armor",
+    "ms",
+    "atk_time",
+    "hp_regen",
+    "mana_regen",
 ];
 pub const PROJ_FIELDS: &[&str] = &["id", "x", "y", "dx", "dy", "fx", "team", "radius", "ability", "homing", "speed"];
 pub const ZONE_FIELDS: &[&str] = &["id", "x", "y", "radius", "t_left", "t_total", "team", "ability", "fx"];
 /// The 8 raw engine event slots plus a `visible` flag computed from the player's vision.
 pub const EVENT_FIELDS: &[&str] = &["type", "a", "b", "x", "y", "v", "w", "t", "visible"];
 pub const GLOBAL_FIELDS: &[&str] = &[
-    "time", "tick", "wave_no", "next_wave", "winner", "player", "player_team", "fog", "n_units", "n_heroes", "n_projs", "n_zones",
-    "n_events", "near_shop", "player_hero",
+    "time",
+    "tick",
+    "wave_no",
+    "next_wave",
+    "winner",
+    "player",
+    "player_team",
+    "fog",
+    "n_units",
+    "n_heroes",
+    "n_projs",
+    "n_zones",
+    "n_events",
+    "near_shop",
+    "player_hero",
 ];
 
 /// Bits of the unit `status` column.
@@ -230,14 +317,36 @@ impl Bridge {
             if !seen(g, p.pos) {
                 continue;
             }
-            projs.extend_from_slice(&[p.id as f32, p.pos.x, p.pos.y, p.dir.x, p.dir.y, p.fx as f32, p.team as f32, p.radius, p.ability as f32, b2f(p.homing != 0), p.speed]);
+            projs.extend_from_slice(&[
+                p.id as f32,
+                p.pos.x,
+                p.pos.y,
+                p.dir.x,
+                p.dir.y,
+                p.fx as f32,
+                p.team as f32,
+                p.radius,
+                p.ability as f32,
+                b2f(p.homing != 0),
+                p.speed,
+            ]);
         }
         zones.clear();
         for z in &g.zones {
             if z.team != pt && !seen(g, z.pos) {
                 continue;
             }
-            zones.extend_from_slice(&[z.id as f32, z.pos.x, z.pos.y, z.radius, z.t_left, z.t_total, z.team as f32, z.ability as f32, z.fx as f32]);
+            zones.extend_from_slice(&[
+                z.id as f32,
+                z.pos.x,
+                z.pos.y,
+                z.radius,
+                z.t_left,
+                z.t_total,
+                z.team as f32,
+                z.ability as f32,
+                z.fx as f32,
+            ]);
         }
 
         // ---- events (drained)
@@ -341,7 +450,18 @@ fn build_info(g: &Game) -> String {
         s,
         "{{\"abi\":{},\"tick_hz\":{},\"world\":{},\"cell\":{},\"grid\":{},\"shop_radius\":{},\"max_level\":{},\"inv_slots\":{},\
          \"wave_interval\":{},\"xp_radius\":{},\"start_gold\":{},\"blink_dagger_range\":{}",
-        ABI_VERSION, TICK_HZ, WORLD, CELL, GRID, g.content.rules.shop_radius, g.content.max_level(), INV_SLOTS, g.content.rules.wave_interval, g.content.rules.xp_radius, g.content.rules.start_gold, g.content.rules.blink_range
+        ABI_VERSION,
+        TICK_HZ,
+        WORLD,
+        CELL,
+        GRID,
+        g.content.rules.shop_radius,
+        g.content.max_level(),
+        INV_SLOTS,
+        g.content.rules.wave_interval,
+        g.content.rules.xp_radius,
+        g.content.rules.start_gold,
+        g.content.rules.blink_range
     );
     s.push_str(",\"xp_table\":");
     arr(&mut s, &g.content.xp_table);
@@ -350,7 +470,14 @@ fn build_info(g: &Game) -> String {
         if i > 0 {
             s.push(',');
         }
-        let _ = write!(s, "{{\"name\":{},\"version\":{},\"author\":{},\"description\":{}}}", crate::json::quote(&m.name), crate::json::quote(&m.version), crate::json::quote(&m.author), crate::json::quote(&m.description));
+        let _ = write!(
+            s,
+            "{{\"name\":{},\"version\":{},\"author\":{},\"description\":{}}}",
+            crate::json::quote(&m.name),
+            crate::json::quote(&m.version),
+            crate::json::quote(&m.author),
+            crate::json::quote(&m.description)
+        );
     }
     s.push(']');
 
@@ -371,28 +498,33 @@ fn build_info(g: &Game) -> String {
     let _ = write!(
         s,
         ",\"kind\":{{\"hero\":{},\"melee\":{},\"ranged\":{},\"siege\":{},\"neutral\":{},\"tower\":{},\"ancient\":{}}}",
-        Kind::Hero as u8, Kind::Melee as u8, Kind::Ranged as u8, Kind::Siege as u8, Kind::Neutral as u8, Kind::Tower as u8, Kind::Ancient as u8
+        Kind::Hero as u8,
+        Kind::Melee as u8,
+        Kind::Ranged as u8,
+        Kind::Siege as u8,
+        Kind::Neutral as u8,
+        Kind::Tower as u8,
+        Kind::Ancient as u8
     );
     let _ = write!(
         s,
         ",\"cast\":{{\"none\":{},\"target\":{},\"line\":{},\"point\":{},\"self_aoe\":{},\"self_buff\":{},\"blink\":{}}}",
-        Cast::None as u8, Cast::Target as u8, Cast::Line as u8, Cast::PointAoE as u8, Cast::SelfAoE as u8, Cast::SelfBuff as u8, Cast::Blink as u8
+        Cast::None as u8,
+        Cast::Target as u8,
+        Cast::Line as u8,
+        Cast::PointAoE as u8,
+        Cast::SelfAoE as u8,
+        Cast::SelfBuff as u8,
+        Cast::Blink as u8
     );
     let _ = write!(
         s,
         ",\"status\":{{\"stun\":{},\"root\":{},\"slow\":{},\"haste\":{},\"aspd\":{},\"salve\":{},\"mana\":{}}}",
         ST_STUN, ST_ROOT, ST_SLOW, ST_HASTE, ST_ASPD, ST_SALVE, ST_MANA
     );
-    let _ = write!(
-        s,
-        ",\"fx\":{{\"stun\":{},\"slow\":{},\"root\":{},\"haste\":{},\"aspd\":{}}}",
-        FX_STUN, FX_SLOW, FX_ROOT, FX_HASTE, FX_ASPD
-    );
-    let _ = write!(
-        s,
-        ",\"act\":{{\"none\":{},\"salve\":{},\"mana\":{},\"blink\":{}}}",
-        ACT_NONE, ACT_SALVE, ACT_MANA, ACT_BLINK
-    );
+    let _ =
+        write!(s, ",\"fx\":{{\"stun\":{},\"slow\":{},\"root\":{},\"haste\":{},\"aspd\":{}}}", FX_STUN, FX_SLOW, FX_ROOT, FX_HASTE, FX_ASPD);
+    let _ = write!(s, ",\"act\":{{\"none\":{},\"salve\":{},\"mana\":{},\"blink\":{}}}", ACT_NONE, ACT_SALVE, ACT_MANA, ACT_BLINK);
     let _ = write!(
         s,
         ",\"ev\":{{\"damage\":{},\"kill\":{},\"heal\":{},\"level\":{},\"building\":{},\"cast\":{},\"gold\":{},\"gameover\":{},\"wave\":{},\"respawn\":{},\"attack\":{},\"item\":{},\"learn\":{},\"blink\":{},\"assist\":{}}}",
@@ -454,7 +586,15 @@ fn build_info(g: &Game) -> String {
         let _ = write!(
             s,
             ",\"cast\":{},\"dtype\":{},\"fx\":{},\"max_level\":{},\"speed\":{},\"delay\":{},\"aoe_on_land\":{},\"icon\":{},\"color\":{}",
-            a.cast as u8, a.dtype as u8, a.fx, a.max_level, a.speed, a.delay, a.aoe_on_land, crate::json::quote(a.icon), crate::json::quote(a.color)
+            a.cast as u8,
+            a.dtype as u8,
+            a.fx,
+            a.max_level,
+            a.speed,
+            a.delay,
+            a.aoe_on_land,
+            crate::json::quote(a.icon),
+            crate::json::quote(a.color)
         );
         let req = a.req_level.map(|v| v as f32);
         for (k, v) in [
@@ -535,7 +675,8 @@ struct ModState {
     export: Vec<u8>,
 }
 
-static MODS: Mutex<ModState> = Mutex::new(ModState { pending: None, version: 0, leaked: None, stage: Vec::new(), error: Vec::new(), export: Vec::new() });
+static MODS: Mutex<ModState> =
+    Mutex::new(ModState { pending: None, version: 0, leaked: None, stage: Vec::new(), error: Vec::new(), export: Vec::new() });
 
 fn mods() -> std::sync::MutexGuard<'static, ModState> {
     MODS.lock().unwrap_or_else(|e| e.into_inner())

@@ -12,7 +12,11 @@ pub enum Order {
     AttackMove(Vec2),
     Attack(u32),
     /// `slot` 0..=3 are hero abilities, 10..=15 are inventory items.
-    Cast { slot: u8, target: u32, point: Vec2 },
+    Cast {
+        slot: u8,
+        target: u32,
+        point: Vec2,
+    },
     /// Attack only what is already in range; never move.
     Hold,
     /// Stand still and do nothing (used by bots waiting for a last hit).

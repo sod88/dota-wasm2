@@ -21,6 +21,12 @@ else()
   add_compile_options(-ffp-contract=off -fno-fast-math -fno-exceptions -Wall -Wextra -Wno-unused-parameter)
 endif()
 
+# CI builds with -DMOBA_WERROR=ON so new warnings fail the build; off by default for other compilers.
+option(MOBA_WERROR "Treat compiler warnings as errors" OFF)
+if(MOBA_WERROR)
+  add_compile_options($<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>)
+endif()
+
 file(GLOB ENGINE_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 # Everything except the C ABI, for the tests and examples.

@@ -17,7 +17,8 @@ cd "$(dirname "$0")"
 OUT=web/moba_engine_cpp.wasm
 SRC=(cpp/src/*.cpp)
 # Same floating-point rules as the native build: the simulation must match the Rust engine bit for bit.
-FLAGS=(-std=c++17 -O3 -DNDEBUG -ffp-contract=off -fno-fast-math -fno-exceptions -Icpp/src)
+FLAGS=(-std=c++17 -O3 -DNDEBUG -ffp-contract=off -fno-fast-math -fno-exceptions -Wall -Wextra -Wno-unused-parameter -Icpp/src)
+[ -n "${WERROR:-}" ] && FLAGS+=(-Werror) # CI sets WERROR=1
 FUNCS=(moba_abi_version moba_new moba_step moba_snapshot moba_hash_lo moba_hash_hi
        moba_units_ptr moba_heroes_ptr moba_projs_ptr moba_zones_ptr moba_events_ptr moba_global_ptr
        moba_info_ptr moba_info_len moba_terrain_ptr

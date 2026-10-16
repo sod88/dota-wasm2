@@ -11,6 +11,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Format and lint (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt
+        run: cargo fmt --check
+
+      - name: cargo clippy
+        run: cargo clippy --release --all-targets -- -D warnings
+
+      - name: cargo clippy (wasm32)
+        run: cargo clippy --release --lib --target wasm32-unknown-unknown -- -D warnings
+
   native:
     name: Tests and parity (native)
     runs-on: ubuntu-latest
@@ -27,7 +47,7 @@ jobs:
 
       - name: C++ build
         run: |
-          cmake -S cpp -B cpp/build
+          cmake -S cpp -B cpp/build -DMOBA_WERROR=ON
           cmake --build cpp/build -j
 
       - name: C++ tests
@@ -39,6 +59,8 @@ jobs:
   wasm:
     name: WebAssembly builds
     runs-on: ubuntu-latest
+    env:
+      WERROR: 1 # C++ warnings fail build-cpp.sh / build-render.sh
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

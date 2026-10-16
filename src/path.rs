@@ -26,16 +26,7 @@ impl PartialOrd for Node {
     }
 }
 
-const DIRS: [(i32, i32, i32); 8] = [
-    (1, 0, 10),
-    (-1, 0, 10),
-    (0, 1, 10),
-    (0, -1, 10),
-    (1, 1, 14),
-    (1, -1, 14),
-    (-1, 1, 14),
-    (-1, -1, 14),
-];
+const DIRS: [(i32, i32, i32); 8] = [(1, 0, 10), (-1, 0, 10), (0, 1, 10), (0, -1, 10), (1, 1, 14), (1, -1, 14), (-1, 1, 14), (-1, -1, 14)];
 
 /// Reusable A* scratch space. Generation stamps avoid clearing the arrays per query.
 pub struct PathFinder {
@@ -92,11 +83,7 @@ impl PathFinder {
         self.g[sidx] = 0;
         self.parent[sidx] = -1;
         self.open_stamp[sidx] = self.stamp;
-        self.heap.push(Node {
-            f: Self::heuristic(start.0, start.1, goal),
-            g: 0,
-            idx: sidx as u32,
-        });
+        self.heap.push(Node { f: Self::heuristic(start.0, start.1, goal), g: 0, idx: sidx as u32 });
 
         let mut found = false;
         while let Some(Node { g, idx, .. }) = self.heap.pop() {
@@ -128,11 +115,7 @@ impl PathFinder {
                     self.open_stamp[ni] = self.stamp;
                     self.g[ni] = ng;
                     self.parent[ni] = i as i32;
-                    self.heap.push(Node {
-                        f: ng + Self::heuristic(nx, ny, goal),
-                        g: ng,
-                        idx: ni as u32,
-                    });
+                    self.heap.push(Node { f: ng + Self::heuristic(nx, ny, goal), g: ng, idx: ni as u32 });
                 }
             }
         }

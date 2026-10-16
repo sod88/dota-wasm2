@@ -61,7 +61,9 @@ fn player_can_move_level_buy_and_cast_through_the_c_abi() {
     // static info is reachable and parses as JSON-ish text
     let info = unsafe { std::slice::from_raw_parts(moba_info_ptr() as *const u8, moba_info_len()) };
     let info = std::str::from_utf8(info).unwrap();
-    assert!(info.starts_with(&format!("{{\"abi\":{}", ABI_VERSION)) && info.contains("\"Frost Nova\"") && info.contains("\"Blink Dagger\""));
+    assert!(
+        info.starts_with(&format!("{{\"abi\":{}", ABI_VERSION)) && info.contains("\"Frost Nova\"") && info.contains("\"Blink Dagger\"")
+    );
 
     // -- level up Frost Nova (slot 1) and buy Boots of Speed (item 7, 500g of the 625 start gold)
     moba_cmd_level_up(1);

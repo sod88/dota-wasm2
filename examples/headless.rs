@@ -35,7 +35,12 @@ fn report(g: &Game) {
     println!("--- t = {:>5.1} min   wave {:>2}   units alive {:>3}", g.time / 60.0, g.wave_no, g.units.iter().filter(|u| u.alive).count());
     for team in 0..2u8 {
         let towers = g.count_kind(team, Kind::Tower);
-        println!("  {} towers {:>2}/9   ancient hp {:>5.0}", if team == 0 { "Radiant" } else { "Dire   " }, towers, g.units.iter().find(|u| u.kind == Kind::Ancient && u.team == team).map(|u| u.hp).unwrap_or(0.0));
+        println!(
+            "  {} towers {:>2}/9   ancient hp {:>5.0}",
+            if team == 0 { "Radiant" } else { "Dire   " },
+            towers,
+            g.units.iter().find(|u| u.kind == Kind::Ancient && u.team == team).map(|u| u.hp).unwrap_or(0.0)
+        );
     }
     for h in &g.heroes {
         let u = g.units.iter().find(|u| u.id == h.unit).unwrap();

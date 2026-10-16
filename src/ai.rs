@@ -186,7 +186,7 @@ impl Game {
         for u in &self.units {
             if u.alive && u.team == team && u.kind.is_lane_creep() && u.lane as usize == lane {
                 let d = u.pos.dist(enemy_base);
-                if front.map_or(true, |(bd, _)| d < bd) {
+                if front.is_none_or(|(bd, _)| d < bd) {
                     front = Some((d, u.pos));
                 }
             }
@@ -205,10 +205,8 @@ impl Game {
         for (j, t) in self.units.iter().enumerate() {
             if t.alive && t.kind == Kind::Tower && t.team != team && t.pos.dist(p) <= t.range + 40.0 {
                 // Towers prefer creeps: allied creeps inside the tower's range soak the shots.
-                let covered = self
-                    .units
-                    .iter()
-                    .any(|c| c.alive && c.team == team && c.kind.is_lane_creep() && c.pos.dist(t.pos) <= t.range + 10.0);
+                let covered =
+                    self.units.iter().any(|c| c.alive && c.team == team && c.kind.is_lane_creep() && c.pos.dist(t.pos) <= t.range + 10.0);
                 if !covered {
                     return Some(j);
                 }
@@ -362,20 +360,20 @@ impl Game {
             let t_hit = self.bot_hit_time(ui, e);
             let hp_at_hit = vhp - self.incoming_damage(e, ui, t_hit);
             if d <= reach_of(self, e) + 140.0 && hp_at_hit <= exp * 1.05 && hp_at_hit > 0.0 {
-                if last_hit.map_or(true, |(h, _)| vhp < h) {
+                if last_hit.is_none_or(|(h, _)| vhp < h) {
                     last_hit = Some((vhp, vid));
                 }
             } else if d <= reach_of(self, e) && vhp <= exp * 2.3 {
                 // Only chip at a creep when our next swing will still be in time for the kill.
                 let at = self.units[ui].attack_time();
                 let after = vhp - exp - self.incoming_damage(e, ui, t_hit + at);
-                if after > 0.0 && soft.map_or(true, |(h, _)| vhp < h) {
+                if after > 0.0 && soft.is_none_or(|(h, _)| vhp < h) {
                     soft = Some((vhp, vid));
                 }
             }
             if d <= 520.0 && self.tower_threat_at(team, vpos).is_none() {
                 let soon = vhp - self.incoming_damage(e, ui, 2.0);
-                if stalk.map_or(true, |(h, _)| soon < h) {
+                if stalk.is_none_or(|(h, _)| soon < h) {
                     stalk = Some((soon, e));
                 }
             }
@@ -413,7 +411,7 @@ impl Game {
             for (j, t) in self.units.iter().enumerate() {
                 if t.alive && t.kind.is_building() && t.team != team && !self.building_protected(j) {
                     let d = t.pos.dist(pos);
-                    if d < 800.0 && best.map_or(true, |(bd, _)| d < bd) {
+                    if d < 800.0 && best.is_none_or(|(bd, _)| d < bd) {
                         best = Some((d, j));
                     }
                 }
@@ -595,7 +593,11 @@ impl Game {
                         // Telegraphed spells: only when the target is locked down or slowed,
                         // otherwise lead a walking target.
                         let locked = tstun > ab.delay * 0.6 || troot > ab.delay * 0.6;
-                        let lead = if locked { Vec2::ZERO } else { Vec2::new(tface.cos(), tface.sin()) * (self.units[target].speed() * ab.delay * 0.6) };
+                        let lead = if locked {
+                            Vec2::ZERO
+                        } else {
+                            Vec2::new(tface.cos(), tface.sin()) * (self.units[target].speed() * ab.delay * 0.6)
+                        };
                         (locked || tslow > 0.0 || self.rng.f32() < 0.35) && self.cast_ability(ui, slot, 0, tpos + lead)
                     } else {
                         self.cast_ability(ui, slot, 0, tpos)
@@ -608,7 +610,7 @@ impl Game {
                         dist > 160.0
                             && dist <= range + radius * 0.5
                             && hp_frac > 0.5
-                            && (enemy_heroes.len() >= 1)
+                            && !enemy_heroes.is_empty()
                             && self.cast_ability(ui, slot, 0, tpos)
                     } else {
                         false
