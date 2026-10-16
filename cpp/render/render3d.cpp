@@ -354,6 +354,7 @@ static void build_meshes() {
 // Every drawn object is an instance: a model matrix, a colour (linear rgb + opacity) and four extra
 // floats (lit: x = emissive strength; unlit: a uv rectangle into the bound texture, or x < 0 for none).
 enum Pass { LIT, LIT_FADED, UNLIT, ADDITIVE, N_PASS };
+static constexpr int N_KEYS = int(N_PASS) * int(N_MESH);
 struct Inst { float m[16]; float col[4]; float ext[4]; };
 struct Batch { int mesh, first, count; };
 
@@ -381,10 +382,10 @@ static void push(int pass, Mesh mesh, const M4& m, Col c, float alpha, float e0 
 
 /** Group this frame's instances by pass and mesh (counting sort) so each group is one draw call. */
 static void sort_instances() {
-  int counts[N_PASS * N_MESH] = {}, start[N_PASS * N_MESH];
+  int counts[N_KEYS] = {}, start[N_KEYS];
   for (int i = 0; i < n_scratch; i++) counts[scratch_key[i]]++;
   int at = 0;
-  for (int k = 0; k < N_PASS * N_MESH; k++) {
+  for (int k = 0; k < N_KEYS; k++) {
     start[k] = at;
     batches[k / N_MESH][k % N_MESH] = Batch{k % N_MESH, at, counts[k]};
     at += counts[k];
