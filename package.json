@@ -1,0 +1,13 @@
+{
+  "name": "lane-wars-web",
+  "private": true,
+  "description": "TypeScript for the web front end (web/ts -> web/js). Build with ./build-web.sh.",
+  "type": "module",
+  "scripts": {
+    "build:web": "tsc -p web",
+    "check:web": "tsc -p web --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}

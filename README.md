@@ -1,7 +1,8 @@
 # Lane Wars — a moddable Dota-style MOBA engine in C++ and Rust
 
 A deterministic 30 Hz MOBA simulation with **two interchangeable engines**: one in C++ (`cpp/`) and
-one in Rust (`src/`). Both compile to WebAssembly and share one canvas front end in plain JavaScript.
+one in Rust (`src/`). Both compile to WebAssembly and share one canvas front end in JavaScript; its
+interface to the engines (`web/ts/engine.ts`) is TypeScript.
 
 The two engines are the same game:
 
@@ -14,14 +15,14 @@ The two engines are the same game:
 ## Run it (macOS)
 
 ```bash
-# one time: Rust, and Emscripten for the C++ engine
+# one time: Rust, Emscripten for the C++ engine, Node.js for the TypeScript in the web front end
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-brew install emscripten cmake
+brew install emscripten cmake node
 
 ./build.sh        # Rust engine -> web/moba_engine.wasm
 ./build-cpp.sh    # C++ engine  -> web/moba_engine_cpp.wasm
 ./build-render.sh # C++ 3D renderer -> web/render3d.wasm (optional)
-./serve.sh        # http://localhost:8080
+./serve.sh        # http://localhost:8080 (compiles web/ts/ with ./build-web.sh first when needed)
 ```
 
 Pick the engine in the menu (**Engine: Rust | C++**), or open `index.html?engine=cpp`. You only need
@@ -105,7 +106,7 @@ cpp/src/          C++ engine            src/              Rust engine (same modu
   ffi.cpp           the C ABI             ffi.rs
 cpp/tests, cpp/examples                   tests/, examples/
 cpp/render/       the 3D renderer (WebGPU, compiled to render3d.wasm; draws either engine)
-web/              index.html, js/ (engine.js loader, render.js, render3d.js, icons.js, main.js), mods/, parity.html
+web/              index.html, ts/engine.ts (engine loader, compiled to js/engine.js), js/ (render.js, render3d.js, icons.js, main.js), mods/, parity.html
 tools/            enginelib.py (drives either engine from Python), parity.py, gen_cpp_builtin.py
 tests/mod_cases.json   mod error cases both engines must reproduce exactly
 ```
@@ -115,8 +116,10 @@ tests/mod_cases.json   mod error cases both engines must reproduce exactly
 The page calls `moba_new / moba_step / moba_snapshot`, the `moba_cmd_*` commands and the mod
 functions (`moba_alloc`, `moba_mod_load`, `moba_mod_clear`, `moba_content_export`). After a snapshot,
 units, heroes, projectiles, zones and events are flat `f32` tables in wasm memory. Their column names
-are exported as JSON (`unit_fields`, `hero_fields`, …), so `web/js/engine.js` looks columns up by
-name.
+are exported as JSON (`unit_fields`, `hero_fields`, …), so `web/ts/engine.ts` looks columns up by
+name. It also lists the column names as TypeScript types, so a misspelt column fails to compile, and it
+checks at start that the engine has every one of them. Add a column to the `*_FIELDS` lists in
+`src/ffi.rs` and `cpp/src/ffi.cpp`, and to the matching list in `engine.ts` if the page uses it.
 
 Fog of war is enforced inside the engine: the player's team is never sent units it can't see.
 
