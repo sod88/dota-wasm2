@@ -3,6 +3,9 @@ cpp/build/
 web/moba_engine.wasm
 web/moba_engine_cpp.wasm
 web/render3d.wasm
+# compiled from web/ts/ by ./build-web.sh
+web/js/engine.js
+node_modules/
 __pycache__/
 
 # macOS

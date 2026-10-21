@@ -4,7 +4,15 @@
 # Uses the first Python 3 that actually runs on this machine (on Apple Silicon Macs an old Intel-only
 # /usr/local/bin/python3 can fail with "Bad CPU type"), and falls back to Ruby, which every Mac has.
 set -euo pipefail
-cd "$(dirname "$0")/web"
+cd "$(dirname "$0")"
+
+# Compile the TypeScript sources when one is newer than its .js (or the .js is missing).
+for ts in web/ts/*.ts; do
+  js="web/js/$(basename "${ts%.ts}").js"
+  if [ ! -f "$js" ] || [ "$ts" -nt "$js" ]; then ./build-web.sh; break; fi
+done
+
+cd web
 PORT="${1:-8080}"
 echo "Lane Wars: http://localhost:$PORT   (parity check: http://localhost:$PORT/parity.html)   Ctrl+C to stop"
 for py in python3 /usr/bin/python3 /opt/homebrew/bin/python3 python; do
