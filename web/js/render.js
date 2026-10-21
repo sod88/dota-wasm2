@@ -3,6 +3,7 @@
 import { abilityColor } from './icons.js';
 
 const TAU = Math.PI * 2;
+const FOG_SCALE = 0.25; // fog canvas pixels per CSS pixel (see drawFog)
 export const TEAM = [
   { main: '#4fd17a', light: '#a8f5c2', dark: '#1b6e42', rgb: '79,209,122', name: 'Radiant' },
   { main: '#ff5d52', light: '#ffb0a8', dark: '#842019', rgb: '255,93,82', name: 'Dire' },
@@ -254,8 +255,8 @@ export class Renderer {
     this.canvas.height = Math.round(this.H * dpr);
     this.canvas.style.width = this.W + 'px';
     this.canvas.style.height = this.H + 'px';
-    this.fogCanvas.width = this.canvas.width;
-    this.fogCanvas.height = this.canvas.height;
+    this.fogCanvas.width = Math.ceil(this.W * FOG_SCALE);
+    this.fogCanvas.height = Math.ceil(this.H * FOG_SCALE);
     const m = Math.round(this.mini.clientWidth * dpr) || 220;
     this.mini.width = this.mini.height = m;
     this.mfog.width = this.mfog.height = m;
@@ -722,10 +723,14 @@ export class Renderer {
   }
 
   // ---- fog of war
+  /**
+   * Darken what the player's team can't see. The fog is painted at FOG_SCALE of the screen size and
+   * stretched over it: it is all soft edges, and at full resolution this was most of the frame time.
+   */
   drawFog(view) {
     const f = view.cur;
     if (!f.g[this.info.G.fog]) return;
-    const fc = this.fogCanvas, fx = fc.getContext('2d'), { U } = this.info, us = this.info.unit_fields.length, dpr = this.dpr, z = this.cam.zoom;
+    const fc = this.fogCanvas, fx = fc.getContext('2d'), { U } = this.info, us = this.info.unit_fields.length, s = FOG_SCALE, z = this.cam.zoom;
     fx.setTransform(1, 0, 0, 1, 0, 0);
     fx.globalCompositeOperation = 'source-over';
     fx.clearRect(0, 0, fc.width, fc.height);
@@ -736,7 +741,7 @@ export class Renderer {
       const o = i * us;
       if (f.units[o + U.team] !== f.playerTeam) continue;
       const [sx, sy] = this.w2s(view.px[i], view.py[i]);
-      const r = f.units[o + U.vision] * z * dpr, cx = sx * dpr, cy = sy * dpr;
+      const r = f.units[o + U.vision] * z * s, cx = sx * s, cy = sy * s;
       if (cx + r < 0 || cy + r < 0 || cx - r > fc.width || cy - r > fc.height) continue;
       const g = fx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r);
       g.addColorStop(0, 'rgba(0,0,0,1)');
@@ -745,8 +750,8 @@ export class Renderer {
       fx.beginPath(); fx.arc(cx, cy, r, 0, TAU); fx.fill();
     }
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.drawImage(fc, 0, 0);
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.ctx.drawImage(fc, 0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
   }
 
   // ---- ability / attack targeting previews
