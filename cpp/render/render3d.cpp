@@ -13,13 +13,18 @@
 
 #include "gpu.h"
 
+#if defined(__wasm__)
 #define EXPORT(name) extern "C" __attribute__((export_name(#name)))
+#else
+#define EXPORT(name) extern "C" // the native app (cpp/native/) links this file directly
+#endif
 
 typedef unsigned int u32;
 typedef unsigned char u8;
 
 // ------------------------------------------------------------------------------------------- libc bits
 
+#if defined(__wasm__) // natively the C library provides these
 extern "C" __attribute__((weak)) void* memset(void* d, int c, unsigned long n) {
   u8* p = (u8*)d;
   while (n--) *p++ = (u8)c;
@@ -31,6 +36,12 @@ extern "C" __attribute__((weak)) void* memcpy(void* d, const void* s, unsigned l
   while (n--) *p++ = *q++;
   return d;
 }
+#else // declared here rather than through <string.h>, whose other names would join this file's globals
+extern "C" {
+void* memset(void* d, int c, __SIZE_TYPE__ n);
+void* memcpy(void* d, const void* s, __SIZE_TYPE__ n);
+}
+#endif
 
 // ------------------------------------------------------------------------------------------- math
 

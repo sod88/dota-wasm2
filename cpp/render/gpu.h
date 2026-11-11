@@ -8,7 +8,13 @@
 //    resolve into the canvas; TARGET_SHADOW passes are depth-only into a texture made here.
 #pragma once
 
+// In the WebAssembly build these are imports from the page; natively, cpp/native/gpu_native.cpp
+// implements them on top of a native WebGPU library.
+#if defined(__wasm__)
 #define GPU_IMPORT(name) extern "C" __attribute__((import_module("gpu"), import_name(#name)))
+#else
+#define GPU_IMPORT(name) extern "C"
+#endif
 
 enum { TARGET_SCREEN = 0, TARGET_SHADOW = 1 };
 enum { BLEND_NONE = 0, BLEND_ALPHA = 1, BLEND_ADD = 2 };

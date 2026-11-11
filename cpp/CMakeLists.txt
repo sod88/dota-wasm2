@@ -48,3 +48,22 @@ target_link_libraries(headless PRIVATE moba_core)
 
 enable_testing()
 add_test(NAME engine_tests COMMAND engine_tests)
+
+# The native desktop app (cpp/native/): the engine plus the 3D renderer in a window, drawn through a
+# native WebGPU library. Off by default; needs SDL2 and wgpu-native. ../build-native.sh finds or fetches
+# both on macOS and Linux and then runs:
+#   cmake -S cpp -B cpp/build -DMOBA_NATIVE_APP=ON [-DWGPU_NATIVE_DIR=<unpacked wgpu-native release>]
+option(MOBA_NATIVE_APP "Build the native desktop app (needs SDL2 and wgpu-native)" OFF)
+if(MOBA_NATIVE_APP)
+  find_package(SDL2 CONFIG REQUIRED)
+  set(WGPU_HINTS $ENV{WGPU_NATIVE_DIR} ${WGPU_NATIVE_DIR} /opt/homebrew/opt/wgpu-native /usr/local/opt/wgpu-native)
+  find_path(WGPU_INCLUDE_DIR webgpu.h HINTS ${WGPU_HINTS} PATH_SUFFIXES include include/webgpu REQUIRED)
+  find_library(WGPU_LIBRARY NAMES wgpu_native HINTS ${WGPU_HINTS} PATH_SUFFIXES lib REQUIRED)
+
+  add_executable(lanewars native/main.cpp native/gpu_native.cpp render/render3d.cpp)
+  target_include_directories(lanewars PRIVATE ${WGPU_INCLUDE_DIR})
+  target_link_libraries(lanewars PRIVATE moba_core SDL2::SDL2 ${WGPU_LIBRARY})
+  if(APPLE)
+    target_link_libraries(lanewars PRIVATE "-framework Metal" "-framework QuartzCore" "-framework Foundation")
+  endif()
+endif()
