@@ -106,6 +106,14 @@ jobs:
       - name: Check the frame
         run: python3 tools/check_frame.py frame.bmp
 
+      # Playing: learn Q, then right-click up the lane. The title must show Q learned and ready, and
+      # no shop offer ("B: ..."), which only shows while the hero is still at the fountain.
+      - name: Give orders with a scripted mouse and keyboard
+        run: |
+          ${{ matrix.run }} cpp/build/lanewars 2 7 --shot orders.bmp 8 --press Q --mouse 900 250 --click right | tee orders.txt
+          grep -q "Learned .* Q ok" orders.txt
+          ! grep -q "B: " orders.txt
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
