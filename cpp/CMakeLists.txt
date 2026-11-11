@@ -60,7 +60,7 @@ if(MOBA_NATIVE_APP)
   find_path(WGPU_INCLUDE_DIR webgpu.h HINTS ${WGPU_HINTS} PATH_SUFFIXES include include/webgpu REQUIRED)
   find_library(WGPU_LIBRARY NAMES wgpu_native HINTS ${WGPU_HINTS} PATH_SUFFIXES lib REQUIRED)
 
-  add_executable(lanewars native/main.cpp native/gpu_native.cpp native/surface.cpp render/render3d.cpp)
+  add_executable(lanewars native/main.cpp native/gpu_native.cpp native/surface.cpp native/marks.cpp native/play.cpp render/render3d.cpp)
   target_include_directories(lanewars PRIVATE ${WGPU_INCLUDE_DIR})
   target_link_libraries(lanewars PRIVATE moba_core SDL2::SDL2 ${WGPU_LIBRARY})
   if(APPLE)
