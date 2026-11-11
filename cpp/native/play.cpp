@@ -124,7 +124,10 @@ void right_click(Game& g, Ui& ui) {
 }
 
 void left_click(Game& g, Ui& ui) {
-    if (ui.aim.mode == Aim::AttackMove) {
+    if (ui.aim.mode == Aim::Off) {
+        // Not aiming: a left click moves and attacks too, so a one-button mouse or trackpad can play.
+        right_click(g, ui);
+    } else if (ui.aim.mode == Aim::AttackMove) {
         Cmd c = order(Cmd::AttackMove);
         c.to = ui.mouse;
         if (ui.hover >= 0 && is_enemy(g, ui.hover)) {
@@ -333,6 +336,16 @@ void paint_marks(Marks& mk, const Match& m, const Ui& ui, const Screen& sc, floa
         }
     }
 
+    // where your hero is walking to: the engine's own target, so it shows what the click was taken as
+    if (have_me && g.units[my_i].alive) {
+        const Order& o = g.units[my_i].order;
+        if (o.k == Order::Move || o.k == Order::AttackMove) {
+            Rgba c = o.k == Order::Move ? ALLY : ENEMY;
+            mk.disc(o.pt.x, o.pt.y, 5, c.with_alpha(0.9f));
+            mk.ring(o.pt.x, o.pt.y, 13, 3.5f, c.with_alpha(0.8f));
+        }
+    }
+
     for (const Ping& p : ui.pings) {
         float k = 1 - p.life / 0.5f;
         mk.ring(p.at.x, p.at.y, 26 * (1 - k * 0.7f), 4, p.color.with_alpha(1 - k));
@@ -432,9 +445,9 @@ void print_help(const Game& g) {
         std::printf("\n");
     }
     std::printf(
-        "  Right-click     move / attack (also denies hurt allied creeps)\n"
+        "  Click           move / attack (also denies hurt allied creeps); either mouse button\n"
         "  A, then click   attack-move\n"
-        "  Q W E R         cast: click to aim, right-click or Esc backs out.  Shift+key learns it\n"
+        "  Q W E R         cast: left-click to aim, right-click or Esc backs out.  Shift+key learns it\n"
         "  1-6             use an inventory item\n"
         "  S / H           stop / hold position\n"
         "  B / C           at your fountain: buy the next item of your hero's build / a healing salve\n"
