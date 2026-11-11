@@ -6,6 +6,8 @@ web/render3d.wasm
 # compiled from web/ts/ by ./build-web.sh
 web/js/engine.js
 node_modules/
+# wgpu-native, downloaded by ./build-native.sh on Linux
+.deps/
 __pycache__/
 
 # macOS

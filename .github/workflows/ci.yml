@@ -69,6 +69,50 @@ jobs:
       - name: Rust vs C++ parity
         run: python3 tools/parity.py
 
+  # The desktop app on both systems it supports. Neither runner has a screen to look at, so the app
+  # plays 90 seconds, saves the frame it drew and the job checks that the picture is not blank.
+  # Linux draws with Mesa's software Vulkan (lavapipe) on a virtual X display; macOS draws with Metal.
+  app:
+    name: Native app (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Linux, os: ubuntu-latest, run: xvfb-run -a }
+          - { name: macOS, os: macos-latest, run: "" }
+    env:
+      WERROR: 1 # C++ warnings fail build-native.sh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev xvfb mesa-vulkan-drivers
+
+      - name: Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install sdl2 wgpu-native
+
+      - name: Build cpp/build/lanewars
+        run: ./build-native.sh
+
+      - name: Play 90 seconds and draw one frame
+        run: ${{ matrix.run }} cpp/build/lanewars 2 7 --shot frame.bmp 90
+
+      - name: Check the frame
+        run: python3 tools/check_frame.py frame.bmp
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frame-${{ matrix.name }}
+          path: frame.bmp
+          if-no-files-found: ignore
+
   wasm:
     name: WebAssembly builds
     runs-on: ubuntu-latest

@@ -43,6 +43,29 @@ The renderer is freestanding C++ with no standard library, so `build-render.sh` 
 LLVM clang (`brew install llvm`), wasi-sdk or zig. It talks to the browser through a small WebGPU
 bridge in `web/js/render3d.js` (the imports are listed in `cpp/render/gpu.h`).
 
+### Native desktop app (prototype)
+
+`cpp/native/` runs the C++ engine and the same 3D renderer in a window on **macOS and Linux**, without
+a browser. It draws through a native WebGPU library ([wgpu-native](https://github.com/gfx-rs/wgpu-native)),
+so the WGSL shaders run as they are: on Metal on macOS and on Vulkan on Linux. Bots play both teams
+and you watch; there is no HUD yet, and the window title shows the clock and the score.
+
+```bash
+brew install cmake sdl2 wgpu-native            # macOS
+sudo apt install cmake g++ libsdl2-dev         # Linux (Fedora: sudo dnf install cmake gcc-c++ SDL2-devel)
+
+./build-native.sh          # -> cpp/build/lanewars
+cpp/build/lanewars 2 7     # heroes per team, seed
+```
+
+On Linux `build-native.sh` downloads the pinned wgpu-native release into `.deps/` and checks its
+SHA-256 (set `WGPU_NATIVE_DIR` to use your own copy), and the app needs a Vulkan driver to run. CI
+builds the app on both systems, plays 90 seconds and checks the frame it draws. Windows has a code
+path (Direct3D 12) that nobody has built yet.
+
+WASD / arrows pan, the mouse wheel zooms, Space follows your hero, 1–4 set the speed, P pauses,
+F toggles fog of war, N starts a new match. `--shot frame.bmp 90` saves the frame at 1:30 and quits.
+
 ## Mods
 
 Mods are JSON files that add heroes and items, rebalance anything, or change the rules. They load
@@ -106,8 +129,9 @@ cpp/src/          C++ engine            src/              Rust engine (same modu
   ffi.cpp           the C ABI             ffi.rs
 cpp/tests, cpp/examples                   tests/, examples/
 cpp/render/       the 3D renderer (WebGPU, compiled to render3d.wasm; draws either engine)
+cpp/native/       the desktop app for macOS and Linux: window, game loop, WebGPU bridge for the renderer
 web/              index.html, ts/engine.ts (engine loader, compiled to js/engine.js), js/ (render.js, render3d.js, icons.js, main.js), mods/, parity.html
-tools/            enginelib.py (drives either engine from Python), parity.py, gen_cpp_builtin.py
+tools/            enginelib.py (drives either engine from Python), parity.py, gen_cpp_builtin.py, check_frame.py
 tests/mod_cases.json   mod error cases both engines must reproduce exactly
 ```
 
