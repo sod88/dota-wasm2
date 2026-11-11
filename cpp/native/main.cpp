@@ -297,7 +297,7 @@ std::pair<int, int> pack_frame(const Match& m, float alpha, bool fog) {
 int main(int argc, char** argv) {
     // lanewars [heroes_per_team] [seed] [hero] [--watch] [--shot file.bmp [game seconds]]
     int numbers[3] = {2, 7, 0}, n_numbers = 0;
-    bool watch = false;
+    bool watch = false, debug = false;  // --debug prints what every click was taken as
     const char* shot = nullptr;  // for checking the renderer without a person watching
     float shot_at = 60;
     // With --shot, input to play back two game seconds before the frame is saved, to test the controls:
@@ -308,6 +308,8 @@ int main(int argc, char** argv) {
     for (int a = 1; a < argc; a++) {
         if (!std::strcmp(argv[a], "--watch")) {
             watch = true;
+        } else if (!std::strcmp(argv[a], "--debug")) {
+            debug = true;
         } else if (!std::strcmp(argv[a], "--mouse") && a + 2 < argc) {
             fake_mouse[0] = std::strtof(argv[++a], nullptr);
             fake_mouse[1] = std::strtof(argv[++a], nullptr);
@@ -394,6 +396,20 @@ int main(int argc, char** argv) {
         ui.hover = pick_unit(m, alpha, fog, ui.mouse);
         if (button == SDL_BUTTON_RIGHT) right_click(*m.g, ui);
         if (button == SDL_BUTTON_LEFT) left_click(*m.g, ui);
+        if (debug) {
+            int ww = 0, wh = 0, mx = 0, my = 0;
+            SDL_GetWindowSize(window, &ww, &wh);
+            SDL_GetMouseState(&mx, &my);
+            const Unit* u = ui.hover >= 0 ? &m.g->units[(size_t)ui.hover] : nullptr;
+            auto pi = m.g->player_idx();
+            Vec2 hp = pi ? m.g->units[*pi].pos : Vec2();
+            std::printf("click %s at %.0f,%.0f (mouse state %d,%d)  window %dx%d  screen used %.0fx%.0f  camera %.0f,%.0f zoom %.2f  "
+                        "-> ground %.0f,%.0f  hero at %.0f,%.0f  over unit: %s\n",
+                        button == SDL_BUTTON_RIGHT ? "right" : button == SDL_BUTTON_LEFT ? "left" : "other", x, y, mx, my, ww, wh, sc.w, sc.h,
+                        cam_x, cam_y, zoom, ui.mouse.x, ui.mouse.y, hp.x, hp.y,
+                        !u ? "none" : u->team == m.g->player_team ? "ally" : "enemy or neutral");
+            std::fflush(stdout);
+        }
     };
     auto on_key = [&](SDL_Keycode key, bool shift, bool ctrl) {
         Game& g = *m.g;

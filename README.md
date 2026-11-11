@@ -58,7 +58,7 @@ cpp/build/lanewars 2 7 0   # heroes per team, seed, your hero (0 = the first one
 ```
 
 You play your hero with the same mouse and keys as in the browser (they are printed when the app
-starts): right-click to move and attack, `A` + click to attack-move, `Q` `W` `E` `R` then a click to
+starts): click to move and attack (either mouse button), `A` + click to attack-move, `Q` `W` `E` `R` then a click to
 cast, `Shift`+key to learn, `1`–`6` for items, `S` / `H`, `T` for autopilot, `Space` / `Y` and the arrow
 keys for the camera. `--watch` lets the bot play your hero too.
 
